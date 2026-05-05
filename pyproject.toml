@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autonomous-ai-researcher"
+version = "0.1.0"
+description = "An autonomous multi-agent AI system designed to conduct comprehensive scientific research."
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+include = ["core", "agents", "tools", "memory", "ui"]

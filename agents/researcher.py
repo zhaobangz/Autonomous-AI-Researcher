@@ -1,27 +1,42 @@
-from typing import List, Dict, Any
-from core.base_agent import BaseAgent
-from tools .arvix_search import search_arxiv
+"""
+Researcher configured dynamically to pull from the dynamic ReAct tool pool.
+"""
+from agents.base_agent import BaseAgent
+from core.tool_registry import ToolRegistry
 
 class Researcher(BaseAgent):
-    """Researcher Agent: Gathers and synthesizes technical information from arXiv."""
-    
-    def __init__(self):
+    def __init__(self, memory=None, tool_registry: ToolRegistry = None):
+        if tool_registry is None:
+            tool_registry = ToolRegistry()
+            
         super().__init__(
             name="Researcher",
             role="Academic Librarian and Peer-Reviewer",
-            system_prompt=("You are a technical researcher who excels at reading technical "
-                           "XML data from academic APIs. Your goal is to synthesize the findings from "
-                           "the provided paper metadata into clear technical summaries that can "
-                           "inform an experimenter on the state of the art.")
+            system_prompt=(
+                "You are a technical researcher. Synthesize findings using available tools. "
+                "Use search_arxiv to find papers, parse_pdf to read them, and web_search as a fallback. "
+                "When you have enough information, set done=true and provide the final summary in the result field."
+            ),
+            memory=memory,
+            tool_registry=tool_registry
         )
 
-    def run(self, query: str) -> str:
-        """Fetch papers based on a query and synthesize the results."""
-        # 1. External tool use (fetching from arXiv)
-        raw_papers = search_arxiv(query)
+    async def run_async(self, query: str, stream_callback=None) -> str:
+        self.emit("status", f"Starting ReAct research loop for: {query}")
+        result = await self.react_loop(query, max_iterations=4)
         
-        # 2. Reasoning Loop
-        prompt = (f"Synthesize the following paper results based on the research query: '{query}'. "
-                  f"Raw Results: {raw_papers}")
-        
-        return self.generate_response(prompt)
+        if stream_callback:
+            messages = self._create_messages(f"Provide a clear, cohesive final narrative of this research context: {result}")
+            final_summary = ""
+            async for token in self.llm.stream_completion_async(messages):
+                stream_callback("Researcher", token)
+                final_summary += token
+            result = final_summary
+            
+        if self.memory:
+            self.memory.add(
+                texts=[result], 
+                metadatas=[{"source": "researcher_react", "query": query}]
+            )
+            
+        return result

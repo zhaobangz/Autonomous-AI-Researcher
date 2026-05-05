@@ -1,36 +1,59 @@
-from typing import List, Dict, Any
-from core.base_agent import BaseAgent
-import json
+"""
+Structured async execution planner logic.
+"""
+from typing import List, Any
+import asyncio
+from pydantic import BaseModel, field_validator, Field
+from agents.base_agent import BaseAgent
+
+class PlanStep(BaseModel):
+    kind: str = Field(description="One of: search, summarize, code, exec, review")
+    rationale: str
+    expected_output: str
+
+class Plan(BaseModel):
+    steps: List[PlanStep]
+
+    @field_validator('steps')
+    @classmethod
+    def validate_steps(cls, steps):
+        kinds = [s.kind for s in steps]
+        if 'search' not in kinds:
+            raise ValueError("Plan must contain at least one 'search' step.")
+        if 'code' not in kinds:
+            raise ValueError("Plan must contain at least one 'code' step.")
+        valid_kinds = {'search', 'summarize', 'code', 'exec', 'review'}
+        for k in kinds:
+            if k not in valid_kinds:
+                raise ValueError(f"Invalid step kind: {k}")
+        return steps
 
 class Planner(BaseAgent):
-    """Planner Agent: Breaks down research goals into structured milestones."""
-    
-    def __init__(self):
+    def __init__(self, memory=None, tool_registry=None):
         super().__init__(
             name="Planner",
             role="Senior Research Project Manager",
-            system_prompt=("You are a Senior Strategic Researcher. Your goal is to take a research question "
-                           "and output a structured list of 4-6 specific sub-tasks. These must include: "
-                           "1. Literature discovery phase (which keywords to search). "
-                           "2. Hypothesis extraction phase. "
-                           "3. Experimental design phase. "
-                           "4. Execution and Evaluation phase. "
-                           "Output ONLY a JSON list of tasks.")
+            system_prompt=(
+                "You are a Senior Research Project Manager. "
+                "Your goal is to decompose a complex research query into a structured roadmap. "
+                "You must include at least one 'search' step and one 'code' step."
+            ),
+            memory=memory,
+            tool_registry=tool_registry
         )
 
-    def run(self, research_question: str) -> List[str]:
-        """Convert a broad research question into a tactical set of steps."""
-        prompt = f"Develop a research plan for the following question: '{research_question}'"
-        response = self.generate_response(prompt)
-        
-        # Simple extraction for now; in a production setting we'd use structured output
-        try:
-            # Basic attempt to parse if the LLM followed instructions
-            if "[" in response:
-                start = response.find("[")
-                end = response.rfind("]") + 1
-                return json.loads(response[start:end])
-            else:
-                return [line for line in response.split('\n') if line.strip()]
-        except json.JSONDecodeError:
-            return response.split('\n')
+    async def run_async(self, query: str, kg=None) -> Plan:
+        if kg:
+            related_nodes = kg.query_related(query, k=3)
+            prior_brief = "\n".join([
+                f"- Run {r.get('run_id')}: {r.get('title')} (similarity: {r.get('similarity', 0):.2f})\n  Summary: {r.get('summary', '')[:200]}"
+                for r in related_nodes
+            ])
+            if prior_brief:
+                self.system_prompt += f"\n\nPRIOR RESEARCH CONTEXT (do not repeat, build upon):\n{prior_brief}"
+
+        messages = self._create_messages(query)
+        self.emit("status", f"Generating plan for: {query}")
+        plan = await asyncio.to_thread(self.llm.structured_output, messages, Plan)
+        self.emit("plan_generated", plan.model_dump())
+        return plan
