@@ -1,14 +1,12 @@
 FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y \
-    libpango-1.0-0=1.50.12+ds-1 \
-    libpangoft2-1.0-0=1.50.12+ds-1 \
-    libcairo2=1.16.0-7 \
-    curl=7.88.1-10+deb12u8 \
-    docker.io=20.10.24+dfsg1-1+deb12u1 \
+# Install system deps for WeasyPrint (PDF generation) and Docker CLI
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libcairo2 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
-
-RUN useradd -m appuser && usermod -aG docker appuser && chown -R appuser /app
 
 WORKDIR /app
 
@@ -18,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN pip install -e .
 
-RUN chown -R appuser /app
+RUN useradd -m appuser && chown -R appuser /app
 USER appuser
 
 EXPOSE 8501

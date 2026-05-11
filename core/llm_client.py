@@ -4,7 +4,7 @@ Unified LLM interface with robust error handling and async streaming.
 import os
 import json
 import httpx
-from typing import List, Dict, Any, Type, AsyncGenerator
+from typing import List, Dict, Any, Type, AsyncGenerator, Optional
 from pydantic import BaseModel, ValidationError
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -14,6 +14,7 @@ class LLMClient:
     def __init__(self):
         self.provider = os.getenv("LLM_PROVIDER", "openai").lower()
         self.model = os.getenv("LLM_MODEL", "gpt-4o")
+        self.client: Optional[Any] = None
         
         self.usage = {
             "prompt_tokens": 0,
@@ -32,18 +33,32 @@ class LLMClient:
             "claude-sonnet-4-6": [0.003, 0.015]
         }
         
-        api_key = os.getenv("OPENAI_API_KEY") if self.provider == "openai" else os.getenv("ANTHROPIC_API_KEY")
+        if self.provider not in {"openai", "anthropic"}:
+            raise ValueError(f"Unknown provider: {self.provider}")
+
+    def _get_api_key(self) -> str:
+        env_var = "OPENAI_API_KEY" if self.provider == "openai" else "ANTHROPIC_API_KEY"
+        api_key = os.getenv(env_var, "").strip()
         if not api_key or api_key.startswith("your_"):
-            raise EnvironmentError(f"[LLMClient] {self.provider.upper()}_API_KEY is not configured. Set it in .env before running.")
-            
+            raise EnvironmentError(
+                f"[LLMClient] {env_var} is not configured. Copy .env.example to .env "
+                "and set a real key before running agent calls."
+            )
+        return api_key
+
+    def _ensure_client(self) -> Any:
+        """Create provider SDK clients lazily so imports/tests do not need real keys."""
+        if self.client is not None:
+            return self.client
+
+        api_key = self._get_api_key()
         if self.provider == "openai":
             import openai
             self.client = openai.OpenAI(api_key=api_key)
         elif self.provider == "anthropic":
             import anthropic
             self.client = anthropic.Anthropic(api_key=api_key)
-        else:
-            raise ValueError(f"Unknown provider: {self.provider}")
+        return self.client
 
     def _update_usage(self, prompt_tokens: int, completion_tokens: int):
         self.usage["prompt_tokens"] += prompt_tokens
@@ -57,8 +72,9 @@ class LLMClient:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     def chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000) -> str:
+        client = self._ensure_client()
         if self.provider == "openai":
-            response = self.client.chat.completions.create(
+            response = client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=temperature,
@@ -69,7 +85,7 @@ class LLMClient:
         elif self.provider == "anthropic":
             system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
             msgs = [m for m in messages if m["role"] != "system"]
-            response = self.client.messages.create(
+            response = client.messages.create(
                 model=self.model,
                 messages=msgs,
                 system=system_msg,
@@ -80,10 +96,15 @@ class LLMClient:
             return response.content[0].text
 
     async def stream_completion_async(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000) -> AsyncGenerator[str, None]:
-        async with httpx.AsyncClient() as client:
+        collected_text = ""
+        prompt_tokens = 0
+        completion_tokens = 0
+        api_key = self._get_api_key()
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
             if self.provider == "openai":
                 headers = {
-                    "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 }
                 data = {
@@ -91,7 +112,8 @@ class LLMClient:
                     "messages": messages,
                     "temperature": temperature,
                     "max_tokens": max_tokens,
-                    "stream": True
+                    "stream": True,
+                    "stream_options": {"include_usage": True}
                 }
                 async with client.stream("POST", "https://api.openai.com/v1/chat/completions", headers=headers, json=data) as response:
                     async for line in response.aiter_lines():
@@ -101,15 +123,21 @@ class LLMClient:
                                 break
                             try:
                                 chunk = json.loads(content)
-                                if chunk["choices"][0]["delta"].get("content"):
-                                    yield chunk["choices"][0]["delta"]["content"]
+                                # OpenAI includes usage in the final chunk when stream_options.include_usage is set
+                                if chunk.get("usage"):
+                                    prompt_tokens = chunk["usage"].get("prompt_tokens", 0)
+                                    completion_tokens = chunk["usage"].get("completion_tokens", 0)
+                                if chunk.get("choices") and chunk["choices"][0]["delta"].get("content"):
+                                    delta = chunk["choices"][0]["delta"]["content"]
+                                    collected_text += delta
+                                    yield delta
                             except json.JSONDecodeError:
                                 pass
             elif self.provider == "anthropic":
                 system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
                 msgs = [m for m in messages if m["role"] != "system"]
                 headers = {
-                    "x-api-key": os.getenv("ANTHROPIC_API_KEY"),
+                    "x-api-key": api_key,
                     "anthropic-version": "2023-06-01",
                     "content-type": "application/json"
                 }
@@ -127,10 +155,27 @@ class LLMClient:
                             content = line[6:]
                             try:
                                 chunk = json.loads(content)
-                                if chunk.get("type") == "content_block_delta" and "delta" in chunk:
-                                    yield chunk["delta"]["text"]
+                                # Anthropic sends input token count in message_start
+                                if chunk.get("type") == "message_start" and "message" in chunk:
+                                    usage = chunk["message"].get("usage", {})
+                                    prompt_tokens = usage.get("input_tokens", 0)
+                                # Anthropic sends output token count in message_delta
+                                elif chunk.get("type") == "message_delta" and "usage" in chunk:
+                                    completion_tokens = chunk["usage"].get("output_tokens", 0)
+                                elif chunk.get("type") == "content_block_delta" and "delta" in chunk:
+                                    delta = chunk["delta"]["text"]
+                                    collected_text += delta
+                                    yield delta
                             except json.JSONDecodeError:
                                 pass
+
+        # ── Token accounting (was previously missing for streaming) ────────
+        if prompt_tokens == 0 and completion_tokens == 0:
+            # Fallback: estimate from text lengths if API didn't provide usage
+            prompt_text = " ".join(m.get("content", "") for m in messages)
+            prompt_tokens = len(prompt_text) // 4
+            completion_tokens = len(collected_text) // 4
+        self._update_usage(prompt_tokens, completion_tokens)
 
     def structured_output(self, messages: List[Dict[str, str]], schema: Type[BaseModel]) -> BaseModel:
         schema_json = json.dumps(schema.model_json_schema())

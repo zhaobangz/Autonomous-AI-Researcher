@@ -26,7 +26,6 @@ class VectorStore:
             run_chroma_dir.mkdir(parents=True, exist_ok=True)
             self.client = chromadb.PersistentClient(path=str(run_chroma_dir))
             self.collection = self.client.get_or_create_collection("research_context")
-            self.global_collection = self.client.get_or_create_collection("global_knowledge")
         elif self.backend == "pinecone":
             from pinecone import Pinecone, ServerlessSpec
             pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
@@ -48,7 +47,6 @@ class VectorStore:
             
         if self.backend == "chroma":
             self.collection.add(documents=texts, metadatas=metadatas, ids=ids)
-            self.global_collection.add(documents=texts, metadatas=metadatas, ids=ids)
         elif self.backend == "pinecone":
             from memory.embeddings import embed
             embeddings = [embed(t) for t in texts]

@@ -1,0 +1,148 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.0, pytest-9.0.3, pluggy-1.6.0 -- /Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12
+cachedir: .pytest_cache
+rootdir: /Users/williamzhu/Desktop/Developer/Autonomous AI Researcher
+configfile: pyproject.toml
+plugins: anyio-4.11.0, asyncio-1.3.0, typeguard-2.13.3, zarr-3.1.3, mock-3.14.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... 
+-----
+
+WeasyPrint could not import some external libraries. Please carefully follow the installation steps before reporting an issue:
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation
+https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#troubleshooting 
+
+-----
+
+collected 1 item
+
+tests/test_agent_loop.py::test_run_agent OpenAI embedding error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-fake. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+OpenAI embedding error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-fake. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+OpenAI embedding error: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-fake. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}
+DEBUG: title type=<class 'str'>, url type=<class 'str'>, summary type=<class 'str'>, run_id type=<class 'str'>, new_emb type=<class 'unittest.mock.MagicMock'>, new_emb.tolist type=<class 'unittest.mock.MagicMock'>
+FAILED
+
+=================================== FAILURES ===================================
+________________________________ test_run_agent ________________________________
+
+mock_llm = None
+mocker = <pytest_mock.plugin.MockerFixture object at 0x120f50b30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x120f50c80>
+
+    def test_run_agent(mock_llm, mocker, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-fake")
+        monkeypatch.setenv("RUNS_DIR", "./runs")
+        mocker.patch("tools.arxiv_search.search_arxiv", return_value=[])
+        mocker.patch("tools.web_search.web_search", return_value=[{"title": "Test", "content": "Text", "url": "http://test"}])
+        mocker.patch("tools.code_executor.PythonExecutor.execute", return_value={"stdout": "hello", "stderr": "", "exit_code": 0, "runtime": 0.1, "artifacts": []})
+        mocker.patch("memory.embeddings.embed", return_value=__import__('numpy').zeros(384))
+>       result = asyncio.run(run_agent_async("Test question"))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_agent_loop.py:23: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:664: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+core/agent_loop.py:51: in run_agent_async
+    context["literature"].extend(await asyncio.gather(*[run_search(i, s) for i, s in enumerate(search_steps)]))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+core/agent_loop.py:48: in run_search
+    await kg.add_paper(title=f"Research Module {idx}", url="", summary=summary, run_id=run_id)
+memory/knowledge_graph.py:46: in add_paper
+    await asyncio.to_thread(self.save)
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/concurrent/futures/thread.py:58: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+memory/knowledge_graph.py:26: in save
+    self.graph_path.write_text(json.dumps(nx.node_link_data(self.graph)))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py:231: in dumps
+    return _default_encoder.encode(obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py:258: in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.encoder.JSONEncoder object at 0x1032c21e0>
+o = <MagicMock name='embed._model.encode().__getitem__().tolist()' id='6090556480'>
+
+    def default(self, o):
+        """Implement this method in a subclass such that it returns
+        a serializable object for ``o``, or calls the base implementation
+        (to raise a ``TypeError``).
+    
+        For example, to support arbitrary iterators, you could
+        implement default like this::
+    
+            def default(self, o):
+                try:
+                    iterable = iter(o)
+                except TypeError:
+                    pass
+                else:
+                    return list(iterable)
+                # Let the base class default method raise the TypeError
+                return JSONEncoder.default(self, o)
+    
+        """
+>       raise TypeError(f'Object of type {o.__class__.__name__} '
+                        f'is not JSON serializable')
+E       TypeError: Object of type MagicMock is not JSON serializable
+
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py:180: TypeError
+------------------------------ Captured log call -------------------------------
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+ERROR    chromadb.telemetry.product.posthog:posthog.py:59 Failed to send telemetry event CollectionAddEvent: capture() takes 1 positional argument but 3 were given
+=============================== warnings summary ===============================
+tests/test_agent_loop.py::test_run_agent
+  /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/feedparser/encodings.py:29: DeprecationWarning: 'cgi' is deprecated and slated for removal in Python 3.13
+    import cgi
+
+tests/test_agent_loop.py::test_run_agent
+  <frozen importlib._bootstrap>:488: DeprecationWarning: Type google._upb._message.MessageMapContainer uses PyType_Spec with a metaclass that has custom tp_new. This is deprecated and will no longer be allowed in Python 3.14.
+
+tests/test_agent_loop.py::test_run_agent
+  <frozen importlib._bootstrap>:488: DeprecationWarning: Type google._upb._message.ScalarMapContainer uses PyType_Spec with a metaclass that has custom tp_new. This is deprecated and will no longer be allowed in Python 3.14.
+
+tests/test_agent_loop.py::test_run_agent
+  /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pypdf/_crypt_providers/_cryptography.py:32: CryptographyDeprecationWarning: ARC4 has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.ARC4 and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+    from cryptography.hazmat.primitives.ciphers.algorithms import AES, ARC4
+
+tests/test_agent_loop.py::test_run_agent
+tests/test_agent_loop.py::test_run_agent
+  /Users/williamzhu/Desktop/Developer/Autonomous AI Researcher/core/task_manager.py:27: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+tests/test_agent_loop.py::test_run_agent
+  /Users/williamzhu/Desktop/Developer/Autonomous AI Researcher/core/task_manager.py:100: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    task.finished_at = datetime.utcnow().isoformat()
+
+tests/test_agent_loop.py::test_run_agent
+  /Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/networkx/readwrite/json_graph/node_link.py:142: FutureWarning: 
+  The default value will be `edges="edges" in NetworkX 3.6.
+  
+  To make this warning go away, explicitly set the edges kwarg, e.g.:
+  
+    nx.node_link_data(G, edges="links") to preserve current behavior, or
+    nx.node_link_data(G, edges="edges") for forward compatibility.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_agent_loop.py::test_run_agent - TypeError: Object of type MagicMock is not JSON serializable
+======================== 1 failed, 8 warnings in 5.29s =========================

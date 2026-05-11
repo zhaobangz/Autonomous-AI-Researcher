@@ -1,6 +1,4 @@
-# tests/test_agent_loop.py
-import pytest
-import asyncio
+import pytest, asyncio
 from core.agent_loop import run_agent_async
 
 def mock_chat_completion(self, messages, *args, **kwargs):
@@ -16,13 +14,13 @@ def mock_llm(mocker):
     mocker.patch("core.llm_client.LLMClient.chat_completion", new=mock_chat_completion)
 
 def test_run_agent(mock_llm, mocker, monkeypatch):
-    monkeypatch.setenv("RUNS_DIR", "./runs")
     monkeypatch.setenv("OPENAI_API_KEY", "sk-fake")
+    monkeypatch.setenv("RUNS_DIR", "./runs")
     mocker.patch("tools.arxiv_search.search_arxiv", return_value=[])
     mocker.patch("tools.web_search.web_search", return_value=[{"title": "Test", "content": "Text", "url": "http://test"}])
+    mocker.patch("docker.from_env")
     mocker.patch("tools.code_executor.PythonExecutor.execute", return_value={"stdout": "hello", "stderr": "", "exit_code": 0, "runtime": 0.1, "artifacts": []})
-    mocker.patch("memory.embeddings.embed", return_value=None)
-    
+    mocker.patch("memory.knowledge_graph.embed", return_value=__import__('numpy').zeros(384))
     result = asyncio.run(run_agent_async("Test question"))
     assert "report_md" in result
     assert "report_pdf_path" in result
