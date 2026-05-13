@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep -lE \"\\(sk-[a-zA-Z0-9]{20,}|sk-ant-[a-zA-Z0-9_-]{20,}|AKIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{30,}|gho_[a-zA-Z0-9]{30,}|AIza[a-zA-Z0-9_-]{30,}|xox[baprs]-[a-zA-Z0-9-]{20,}|hf_[a-zA-Z0-9]{30,}|pplx-[a-zA-Z0-9]{30,}\\)\")",
+      "Bash(xargs -0 grep -lEI \"sk-ant-[a-zA-Z0-9_-]{10,}|sk-[a-zA-Z0-9]{20,}|sk-proj-[a-zA-Z0-9_-]{20,}|AKIA[A-Z0-9]{16}|ASIA[A-Z0-9]{16}|ghp_[a-zA-Z0-9]{30,}|gho_[a-zA-Z0-9]{30,}|github_pat_[a-zA-Z0-9_]{20,}|AIza[a-zA-Z0-9_-]{30,}|ya29\\\\.[a-zA-Z0-9_-]+|xox[baprs]-[a-zA-Z0-9-]{10,}|hf_[a-zA-Z0-9]{30,}|pplx-[a-zA-Z0-9]{30,}|tvly-[a-zA-Z0-9]{20,}|SG\\\\.[a-zA-Z0-9_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----\")",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('api/server.py'\\).read\\(\\)\\)\")",
+      "Bash(echo \"---return code: $?\")"
+    ]
+  }
+}
