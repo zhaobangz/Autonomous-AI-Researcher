@@ -1,5 +1,5 @@
 import pytest, asyncio
-from core.agent_loop import run_agent_async
+from core.agent_loop import run_agent, run_agent_async
 
 def mock_chat_completion(self, messages, *args, **kwargs):
     system = messages[0]["content"] if messages else ""
@@ -26,3 +26,16 @@ def test_run_agent(mock_llm, mocker, monkeypatch):
     assert "report_pdf_path" in result
     assert "tasks" in result
     assert "usage" in result
+
+
+def test_run_agent_sync_entrypoint(mocker):
+    """README/UI compatibility: core.agent_loop must expose sync run_agent()."""
+    mocker.patch(
+        "core.agent_loop.run_agent_async",
+        return_value={"report_md": "report.md", "report_pdf_path": "report.pdf", "tasks": [], "usage": {}},
+    )
+
+    result = run_agent("Tiny question")
+
+    assert result["report_md"] == "report.md"
+    assert result["report_pdf_path"] == "report.pdf"

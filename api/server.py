@@ -1,4 +1,4 @@
-ANTHROPIC_API_KEY="""
+"""
 api/server.py — FastAPI backend for the Autonomous AI Researcher.
 
 Provides REST endpoints for starting, streaming, approving, cancelling,

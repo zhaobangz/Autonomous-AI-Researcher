@@ -1,5 +1,5 @@
-import uuid, os, asyncio, logging
-from typing import Callable, Optional, Dict, Any
+import uuid, os, asyncio, logging, threading
+from typing import Callable, Optional, Dict, Any, TypedDict
 from core.task_manager import TaskManager, Task
 from memory.vector_store import VectorStore
 from memory.knowledge_graph import KnowledgeGraph
@@ -15,6 +15,15 @@ logger = logging.getLogger(__name__)
 
 # Max reroute attempts — configurable via env var
 MAX_REROUTES = int(os.getenv("MAX_REROUTES", "2"))
+
+
+class ReportBundle(TypedDict, total=False):
+    """Serializable result bundle returned by the agent loop."""
+
+    report_md: str
+    report_pdf_path: str
+    tasks: list[dict]
+    usage: dict[str, float]
 
 
 async def run_agent_async(research_question, run_id=None, on_event=None, on_token=None, stream_tokens=False):
@@ -132,3 +141,50 @@ async def run_agent_async(research_question, run_id=None, on_event=None, on_toke
     await tm.flush()  # ensure all task state is persisted before returning
     usage = {k: planner.llm.usage[k] + researcher.llm.usage[k] + coder.llm.usage[k] + critic.llm.usage[k] + debater.llm.usage[k] for k in ["prompt_tokens", "completion_tokens", "cost_estimate"]}
     return {"report_md": report_paths["report_md"], "report_pdf_path": report_paths["report_pdf_path"], "tasks": [t.model_dump() for t in tm.history()], "usage": usage}
+
+
+def run_agent(
+    research_question: str,
+    on_event: Optional[Callable] = None,
+    run_id: Optional[str] = None,
+    on_token: Optional[Callable[[str, str], None]] = None,
+    stream_tokens: bool = False,
+) -> ReportBundle:
+    """
+    Synchronous public entry point required by README/UI integrations.
+
+    Most production paths call ``run_agent_async`` directly (FastAPI), but a
+    synchronous wrapper keeps CLI scripts, tests, and simple Streamlit/local
+    usage ergonomic. If called while an event loop is already running, execute
+    the coroutine in a short-lived background thread to avoid ``asyncio.run``
+    nesting errors.
+    """
+
+    coro_factory = lambda: run_agent_async(
+        research_question,
+        run_id=run_id,
+        on_event=on_event,
+        on_token=on_token,
+        stream_tokens=stream_tokens,
+    )
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro_factory())
+
+    result: dict[str, Any] = {}
+    error: dict[str, BaseException] = {}
+
+    def _runner() -> None:
+        try:
+            result["value"] = asyncio.run(coro_factory())
+        except BaseException as exc:  # propagate after join
+            error["value"] = exc
+
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+    thread.join()
+    if error:
+        raise error["value"]
+    return result["value"]

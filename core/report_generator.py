@@ -1,11 +1,15 @@
 # core/report_generator.py
 import os
+import logging
 import markdown
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 try:
     from weasyprint import HTML
-except OSError:
+except (ImportError, OSError) as exc:
+    logger.warning("WeasyPrint is unavailable; PDF reports will use fallback placeholder: %s", exc)
     HTML = None
 
 class ReportGenerator:
@@ -63,11 +67,18 @@ class ReportGenerator:
             f.write(md_content)
             
         html_content = markdown.markdown(md_content)
-        if HTML:
-            HTML(string=html_content).write_pdf(self.pdf_path)
-        else:
+        try:
+            if HTML:
+                HTML(string=html_content).write_pdf(self.pdf_path)
+            else:
+                raise RuntimeError("WeasyPrint is not available")
+        except Exception as exc:
+            logger.warning("PDF generation failed for run %s: %s", self.run_id, exc)
             with open(self.pdf_path, "wb") as f:
-                f.write(b"PDF generation missing dependencies on host.")
+                f.write(
+                    b"PDF generation unavailable on this host. "
+                    b"Install WeasyPrint native dependencies or use the Markdown report."
+                )
         
         return {
             "report_md": self.md_path,
