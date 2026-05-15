@@ -175,3 +175,57 @@ class TestToolRegistry:
         ))
         result = registry.execute("greet", {"name": "World"})
         assert result == "Hello, World!"
+
+    def test_default_tools_present(self):
+        from core.tool_registry import ToolRegistry
+        registry = ToolRegistry()
+        for name in ("search_arxiv", "web_search", "parse_pdf", "run_python_code"):
+            assert name in registry.tools
+
+    def test_register_replaces_existing_tool(self):
+        from core.tool_registry import ToolDefinition, ToolRegistry
+        registry = ToolRegistry()
+        registry.register(ToolDefinition(
+            name="search_arxiv",
+            description="overridden",
+            input_schema={"type": "object"},
+            fn=lambda **kw: "stubbed",
+        ))
+        assert registry.tools["search_arxiv"].description == "overridden"
+        assert registry.execute("search_arxiv", {}) == "stubbed"
+
+    def test_schema_includes_descriptions(self):
+        import json
+        from core.tool_registry import ToolRegistry
+        registry = ToolRegistry()
+        schemas = json.loads(registry.get_schema_json())
+        for entry in schemas:
+            assert "name" in entry
+            assert "description" in entry
+            assert "parameters" in entry
+            assert entry["description"]  # non-empty
+
+    def test_execute_unknown_lists_available_tools(self):
+        from core.tool_registry import ToolRegistry
+        registry = ToolRegistry()
+        try:
+            registry.execute("nope", {})
+        except ValueError as e:
+            msg = str(e)
+            assert "search_arxiv" in msg
+            assert "web_search" in msg
+
+    def test_run_python_code_lazy_executor_init(self, mocker):
+        """First call constructs PythonExecutor; subsequent calls reuse it."""
+        from core.tool_registry import ToolRegistry
+
+        fake_exec = mocker.MagicMock()
+        fake_exec.execute.return_value = {"stdout": "ok", "stderr": "", "exit_code": 0}
+        ctor = mocker.patch("tools.code_executor.PythonExecutor", return_value=fake_exec)
+
+        registry = ToolRegistry()
+        assert registry._executor is None  # not built yet
+        registry.execute("run_python_code", {"code": "print(1)"})
+        registry.execute("run_python_code", {"code": "print(2)"})
+        assert ctor.call_count == 1
+        assert fake_exec.execute.call_count == 2
