@@ -37,3 +37,10 @@ npm-debug.log*
 .vscode/
 .idea/
 *.swp
+
+# Claude Code per-developer settings
+.claude/settings.local.json
+
+# Local test 
+  output
+pytest_output.txt
