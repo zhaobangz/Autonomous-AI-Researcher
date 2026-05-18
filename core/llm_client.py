@@ -6,7 +6,7 @@ import json
 import httpx
 from typing import List, Dict, Any, Type, AsyncGenerator, Optional
 from pydantic import BaseModel, ValidationError
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_not_exception_type
 
 class LLMClient:
     """Unified interface for interacting with LLMs."""
@@ -40,7 +40,7 @@ class LLMClient:
         env_var = "OPENAI_API_KEY" if self.provider == "openai" else "ANTHROPIC_API_KEY"
         api_key = os.getenv(env_var, "").strip()
         if not api_key or api_key.startswith("your_"):
-            raise EnvironmentError(
+            raise RuntimeError(
                 f"[LLMClient] {env_var} is not configured. Copy .env.example to .env "
                 "and set a real key before running agent calls."
             )
@@ -70,7 +70,12 @@ class LLMClient:
             rates = [0.01, 0.03]
         self.usage["cost_estimate"] += (prompt_tokens * rates[0] / 1000) + (completion_tokens * rates[1] / 1000)
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_not_exception_type((RuntimeError, ValueError, TypeError)),
+        reraise=True,
+    )
     def chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000) -> str:
         client = self._ensure_client()
         if self.provider == "openai":
