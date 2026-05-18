@@ -32,11 +32,22 @@ npm-debug.log*
 
 # ── macOS ─────────────────────────────────────────────────────────────────────
 .DS_Store
+**/.DS_Store
+
+# ── Windows ───────────────────────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini
 
 # ── IDE ───────────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
+*.iml
 *.swp
+
+# ── Notebooks / linters / type checkers ───────────────────────────────────────
+.ipynb_checkpoints/
+.mypy_cache/
+.ruff_cache/
 
 # Claude Code per-developer settings
 .claude/settings.local.json
