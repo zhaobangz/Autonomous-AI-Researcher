@@ -1,0 +1,101 @@
+{
+  "plan_1": {
+    "id": "plan_1",
+    "parent_id": null,
+    "kind": "plan",
+    "status": "done",
+    "input": "What are the trade-offs between LoRA and full fine-tuning for adapting small language models (\u22647B parameters)?",
+    "output": {
+      "steps": [
+        {
+          "kind": "search",
+          "rationale": "Survey arXiv papers comparing LoRA and full fine-tuning on \u22647B LLMs (quality, memory, throughput).",
+          "expected_output": "List of relevant papers with summaries."
+        },
+        {
+          "kind": "search",
+          "rationale": "Find ablation studies varying LoRA rank, target modules, and learning rate.",
+          "expected_output": "Pareto frontier vs. full fine-tuning across configurations."
+        },
+        {
+          "kind": "code",
+          "rationale": "Run a controlled experiment: full fine-tuning vs. LoRA r=8 / r=16 on a 1.3B model + 2k instructions.",
+          "expected_output": "Eval loss, peak GPU memory, and wall-clock per method."
+        },
+        {
+          "kind": "review",
+          "rationale": "Critic verifies experiment design, sample size, and generalization claims.",
+          "expected_output": "Structured critique with confidence score."
+        }
+      ]
+    },
+    "created_at": "2026-05-17T19:00:00.123456+00:00",
+    "finished_at": "2026-05-17T19:00:04.812441+00:00"
+  },
+  "step_search_0": {
+    "id": "step_search_0",
+    "parent_id": "plan_1",
+    "kind": "search",
+    "status": "done",
+    "input": "Survey arXiv papers comparing LoRA and full fine-tuning on \u22647B LLMs.",
+    "output": "Identified LoRA (arXiv:2106.09685), QLoRA (arXiv:2305.14314), Prompt Tuning (arXiv:2104.08691), and Adapters (arXiv:1902.00751) as the core references; cross-paper consensus: <1% trainable params recovers 95\u2013100% of full FT quality at the \u22647B scale on instruction-following and classification.",
+    "created_at": "2026-05-17T19:00:04.812590+00:00",
+    "finished_at": "2026-05-17T19:00:21.443100+00:00"
+  },
+  "step_search_1": {
+    "id": "step_search_1",
+    "parent_id": "plan_1",
+    "kind": "search",
+    "status": "done",
+    "input": "Find LoRA rank / target-module ablations.",
+    "output": "Most ablations target {q_proj, v_proj}; quality is roughly flat from r=8 to r=64 on instruction tasks but improves at higher rank on multi-step reasoning. Learning rate ~2e-4 is a common sweet spot for LoRA vs. ~1e-5 for full FT.",
+    "created_at": "2026-05-17T19:00:21.443215+00:00",
+    "finished_at": "2026-05-17T19:00:33.901788+00:00"
+  },
+  "step_exec_0_code": {
+    "id": "step_exec_0_code",
+    "parent_id": "plan_1",
+    "kind": "code",
+    "status": "done",
+    "input": "Fine-tune a 1.3B model on 2k instructions with full FT and LoRA r=8 / r=16; record eval loss, GPU memory, wall-clock.",
+    "output": {
+      "code": "from peft import LoraConfig, get_peft_model\n# ...measure(full_ft); measure(lora_r8); measure(lora_r16)\nprint(results)",
+      "results": {
+        "stdout": "[{'method': 'full_ft', 'peak_gpu_gb': 21.4, 'wall_clock_s': 1842.0, 'eval_loss': 1.683}, {'method': 'lora_r8', 'peak_gpu_gb': 9.1, 'wall_clock_s': 611.0, 'eval_loss': 1.712}, {'method': 'lora_r16', 'peak_gpu_gb': 9.4, 'wall_clock_s': 638.0, 'eval_loss': 1.694}]\n",
+        "stderr": "",
+        "exit_code": 0,
+        "runtime": 3098.7,
+        "artifacts": []
+      }
+    },
+    "created_at": "2026-05-17T19:00:33.901890+00:00",
+    "finished_at": "2026-05-17T19:52:12.601442+00:00"
+  },
+  "review_0": {
+    "id": "review_0",
+    "parent_id": "step_exec_0_code",
+    "kind": "review",
+    "status": "done",
+    "input": "Review experiment design and conclusions about LoRA vs. full fine-tuning.",
+    "output": {
+      "strengths": "Same base model and dataset for all conditions; reports memory, throughput, and quality together; LoRA setup reproducible on a single 24GB GPU.",
+      "weaknesses": "Single base model, small 2k-example dataset, no reasoning-heavy benchmark, narrow LoRA rank sweep, and no inference-time overhead measurement.",
+      "bias_check": "Risk of confirmation bias toward LoRA because instruction data favors stylistic adaptation.",
+      "confidence_score": 0.72,
+      "recommendations": "Repeat with a reasoning-heavy eval (GSM8K, HumanEval) and a wider rank sweep (r \u2208 {4, 8, 16, 32, 64}) before generalizing.",
+      "final_verdict": "LoRA is a strong default for \u22647B adaptation under memory or wall-clock constraints; full fine-tuning remains preferable for reasoning-heavy targets or latency-critical serving."
+    },
+    "created_at": "2026-05-17T19:52:12.601570+00:00",
+    "finished_at": "2026-05-17T19:52:18.124003+00:00"
+  },
+  "debate_0": {
+    "id": "debate_0",
+    "parent_id": "review_0",
+    "kind": "debate",
+    "status": "done",
+    "input": "Challenge the Critic's claim of LoRA / full-FT parity.",
+    "output": "The 0.029 nat eval-loss gap is small in aggregate but historically correlates with 1\u20133 point drops on reasoning-heavy benchmarks. A balanced verdict should say LoRA dominates on cost / quality Pareto for instruction-following while full fine-tuning retains a meaningful edge on reasoning and on latency-critical deployments.",
+    "created_at": "2026-05-17T19:52:18.124120+00:00",
+    "finished_at": "2026-05-17T19:52:24.987111+00:00"
+  }
+}

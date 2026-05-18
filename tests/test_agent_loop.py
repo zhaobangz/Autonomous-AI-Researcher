@@ -20,8 +20,16 @@ def test_run_agent(mock_llm, mocker, monkeypatch):
     mocker.patch("tools.web_search.web_search", return_value=[{"title": "Test", "content": "Text", "url": "http://test"}])
     mocker.patch("docker.from_env")
     mocker.patch("tools.code_executor.PythonExecutor.execute", return_value={"stdout": "hello", "stderr": "", "exit_code": 0, "runtime": 0.1, "artifacts": []})
-    mocker.patch("memory.knowledge_graph.embed", return_value=__import__('numpy').zeros(384))
+    embedding_response = mocker.Mock()
+    embedding_response.data = [mocker.Mock(embedding=[0.0] * 384)]
+    mock_openai_client = mocker.Mock()
+    mock_openai_client.embeddings.create.return_value = embedding_response
+    mock_openai_class = mocker.patch("openai.OpenAI", return_value=mock_openai_client)
+
     result = asyncio.run(run_agent_async("Test question"))
+
+    mock_openai_class.assert_called()
+    mock_openai_client.embeddings.create.assert_called()
     assert "report_md" in result
     assert "report_pdf_path" in result
     assert "tasks" in result

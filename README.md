@@ -152,3 +152,23 @@ uvicorn api.server:app --reload
 | Knowledge Graph | NetworkX + cosine similarity |
 | Config | Pydantic Settings |
 | Testing | pytest + pytest-mock |
+
+---
+
+## Limitations
+
+- The Docker sandbox is designed for isolation during trusted experiments, but it is **not** a security boundary for untrusted user-supplied code. Only run your own trusted experiments.
+- Each research run consumes real API credits. With GPT-4o, typical runs may cost approximately **$0.10–$0.50** depending on question complexity and retries.
+- LLM outputs may contain factual errors or unsupported claims. Always review generated reports before citing or sharing them.
+- arXiv search is limited to papers available in the arXiv corpus and does not provide paywall access.
+- Complex multi-step questions can run long and may hit `RUN_TIMEOUT_SECONDS` (default: `600` seconds).
+
+---
+
+## Troubleshooting
+
+- **Docker daemon unavailable** — If you see `docker: Cannot connect to the Docker daemon`, start Docker Desktop and retry the run.
+- **WeasyPrint errors on macOS** — Install the required system libraries with `brew install pango cairo`.
+- **OpenAI 401 errors** — Check your `.env` file, confirm `OPENAI_API_KEY` is valid, and ensure there is no extra whitespace.
+- **Redis connection refused** — `RunManager` falls back to in-memory tracking automatically. For persistent run state, start Redis with `docker run -p 6379:6379 redis`.
+- **Python version mismatch** — Use Python 3.11 via pyenv: `pyenv install 3.11 && pyenv local 3.11`.
