@@ -12,9 +12,10 @@ import os
 import uuid
 import asyncio
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import List, Dict, Any, Optional, Callable
 from pydantic import BaseModel, Field
+
+from config import get_settings
 
 
 class Task(BaseModel):
@@ -37,8 +38,7 @@ class TaskManager:
         self.tasks: Dict[str, Task] = {}
         self.callbacks: List[Callable] = []
 
-        BASE_DIR = Path(os.getenv("RUNS_DIR", "./runs")).resolve()
-        self.run_dir = BASE_DIR / run_id
+        self.run_dir = get_settings().runs_dir / run_id
         os.makedirs(self.run_dir, exist_ok=True)
         self.tasks_file = self.run_dir / "tasks.json"
 

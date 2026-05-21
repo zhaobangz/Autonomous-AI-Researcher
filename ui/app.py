@@ -2,8 +2,7 @@ import nest_asyncio
 nest_asyncio.apply()
 
 import streamlit as st
-import os, sys, json, asyncio, websockets, httpx
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import os, json, asyncio, websockets, httpx
 from config import get_settings
 from core.logging_setup import configure_logging
 
@@ -131,9 +130,13 @@ def main() -> None:
         feed_container = st.empty()
         token_container = st.empty()
         if st.session_state.running and "run_id" in st.session_state:
-            asyncio.get_event_loop().run_until_complete(
-                _stream_research_events(settings, st.session_state.run_id, feed_container, token_container)
-            )
+            loop = asyncio.new_event_loop()
+            try:
+                loop.run_until_complete(
+                    _stream_research_events(settings, st.session_state.run_id, feed_container, token_container)
+                )
+            finally:
+                loop.close()
         else:
             with feed_container.container():
                 _render_task_feed(st.session_state.tasks)

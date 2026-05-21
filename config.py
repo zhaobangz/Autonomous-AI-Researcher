@@ -20,6 +20,17 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+_KNOWN_MODELS = {
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-3.5-turbo",
+    "claude-opus-4-7",
+    "claude-opus-4-6",
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5-20251001",
+}
+
+
 class Settings(BaseSettings):
     """Application-wide settings, read from environment / .env file."""
 
@@ -126,6 +137,17 @@ class Settings(BaseSettings):
     @classmethod
     def _resolve_runs_dir(cls, v: str | Path) -> Path:
         return Path(v).resolve()
+
+    @field_validator("llm_model")
+    @classmethod
+    def _warn_unknown_model(cls, v: str) -> str:
+        if v not in _KNOWN_MODELS:
+            import warnings
+            warnings.warn(
+                f"LLM_MODEL='{v}' is not in the known-good model list. Double-check spelling.",
+                stacklevel=2,
+            )
+        return v
 
     # ── Helpers ───────────────────────────────────────────────────────────
     @property

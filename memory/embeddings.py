@@ -1,12 +1,36 @@
-import os
+import logging
+import threading
+from typing import Optional, TYPE_CHECKING
+
 import numpy as np
+
+from config import get_settings
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
+
+logger = logging.getLogger(__name__)
+
+_model: "Optional[SentenceTransformer]" = None
+_model_lock = threading.Lock()
+
+
+def _get_model() -> "SentenceTransformer":
+    global _model
+    if _model is None:
+        with _model_lock:
+            if _model is None:
+                from sentence_transformers import SentenceTransformer
+                _model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _model
+
 
 def embed(texts) -> np.ndarray:
     was_single = isinstance(texts, str)
     if was_single:
         texts = [texts]
-        
-    api_key = os.getenv("OPENAI_API_KEY")
+
+    api_key = get_settings().openai_api_key
     result = None
     if api_key:
         try:
@@ -19,16 +43,13 @@ def embed(texts) -> np.ndarray:
             embeddings = [data.embedding for data in response.data]
             result = np.array(embeddings)
         except Exception as e:
-            print(f"OpenAI embedding error: {e}")
-            
+            logger.warning("OpenAI embedding error: %s", e)
+
     if result is None:
         try:
-            from sentence_transformers import SentenceTransformer
-            if not hasattr(embed, "_model"):
-                embed._model = SentenceTransformer("all-MiniLM-L6-v2")
-            result = embed._model.encode(texts)
+            result = _get_model().encode(texts)
         except Exception as e:
-            print(f"SentenceTransformer error: {e}")
+            logger.warning("SentenceTransformer error, falling back to zeros: %s", e)
             result = np.zeros((len(texts), 384))
-            
+
     return result[0] if was_single else result

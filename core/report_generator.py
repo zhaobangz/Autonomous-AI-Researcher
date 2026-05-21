@@ -1,8 +1,12 @@
 # core/report_generator.py
 import os
 import logging
+from typing import Union
+
 import markdown
-from pathlib import Path
+from pydantic import BaseModel
+
+from config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +19,20 @@ except (ImportError, OSError) as exc:
 class ReportGenerator:
     def __init__(self, run_id: str):
         self.run_id = run_id
-        base = Path(os.getenv("RUNS_DIR", "./runs")).resolve()
-        self.run_dir = str(base / run_id)
+        self.run_dir = str(get_settings().runs_dir / run_id)
         os.makedirs(self.run_dir, exist_ok=True)
         self.md_path = os.path.join(self.run_dir, "report.md")
         self.pdf_path = os.path.join(self.run_dir, "report.pdf")
 
-    def build(self, context: dict, critique: dict, debate_rebuttal: str = "") -> dict:
+    def build(
+        self,
+        context: dict,
+        critique: Union[BaseModel, dict],
+        debate_rebuttal: str = "",
+    ) -> dict:
+        # `critique` accepts both a Pydantic model (the normal path from
+        # critic.run_async) and a plain dict (loaded from persisted JSON).
+        # Normalize via model_dump() before the .get() lookups below.
         question = context.get("question", "Unknown")
         plan = context.get("plan", [])
         literature = context.get("literature", [])
@@ -51,13 +62,12 @@ class ReportGenerator:
             md_content += f"### Execution Errors\n```\n{results.get('stderr')}\n```\n\n"
             
         md_content += f"\n## 5. Critic Review\n"
-        if hasattr(critique, "model_dump"):
-            critique = critique.model_dump()
-        
-        md_content += f"- **Strengths**: {critique.get('strengths', '')}\n"
-        md_content += f"- **Weaknesses**: {critique.get('weaknesses', '')}\n"
-        md_content += f"- **Confidence Score**: {critique.get('confidence_score', 0)}\n"
-        md_content += f"- **Verdict**: {critique.get('final_verdict', '')}\n"
+        critique_dict: dict = critique.model_dump() if isinstance(critique, BaseModel) else critique
+
+        md_content += f"- **Strengths**: {critique_dict.get('strengths', '')}\n"
+        md_content += f"- **Weaknesses**: {critique_dict.get('weaknesses', '')}\n"
+        md_content += f"- **Confidence Score**: {critique_dict.get('confidence_score', 0)}\n"
+        md_content += f"- **Verdict**: {critique_dict.get('final_verdict', '')}\n"
 
         if debate_rebuttal:
             md_content += f"\n## 6. Adversarial Debate\n"

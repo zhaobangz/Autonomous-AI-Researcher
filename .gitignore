@@ -5,12 +5,19 @@
 .env.bak
 .env.local
 .env.*.local
+.env.development
+.env.production
+*.env
 *.bak
+*.pem
+*.key
 
 # ── Run artefacts ─────────────────────────────────────────────────────────────
 # Ignore everything under runs/ except the curated demo run below.
 runs/*
 reports/
+*.sqlite3
+*.bin
 # Keep the demo run committed so visitors can see a sample output.
 !runs/example/
 !runs/example/**
@@ -20,7 +27,9 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+.Python
 *.egg-info/
+*.egg
 dist/
 build/
 

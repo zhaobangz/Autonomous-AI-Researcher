@@ -1,19 +1,21 @@
 """
 Unified LLM interface with robust error handling and async streaming.
 """
-import os
 import json
 import httpx
 from typing import List, Dict, Any, Type, AsyncGenerator, Optional
 from pydantic import BaseModel, ValidationError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_not_exception_type
 
+from config import get_settings
+
 class LLMClient:
     """Unified interface for interacting with LLMs."""
-    
+
     def __init__(self):
-        self.provider = os.getenv("LLM_PROVIDER", "openai").lower()
-        self.model = os.getenv("LLM_MODEL", "gpt-4o")
+        settings = get_settings()
+        self.provider = settings.llm_provider.lower()
+        self.model = settings.llm_model
         self.client: Optional[Any] = None
         
         self.usage = {
@@ -38,7 +40,7 @@ class LLMClient:
 
     def _get_api_key(self) -> str:
         env_var = "OPENAI_API_KEY" if self.provider == "openai" else "ANTHROPIC_API_KEY"
-        api_key = os.getenv(env_var, "").strip()
+        api_key = (get_settings().active_llm_api_key or "").strip()
         if not api_key or api_key.startswith("your_"):
             raise RuntimeError(
                 f"[LLMClient] {env_var} is not configured. Copy .env.example to .env "

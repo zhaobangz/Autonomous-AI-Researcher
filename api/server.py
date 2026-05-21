@@ -109,7 +109,12 @@ def _validate_run_id(run_id: str) -> str:
 
 # ── Request / Response models ────────────────────────────────────────────
 class ResearchRequest(BaseModel):
-    question: str = Field(..., min_length=1)
+    question: str = Field(
+        ...,
+        min_length=10,
+        max_length=2000,
+        description="The research question to investigate.",
+    )
 
 
 class ApprovalRequest(BaseModel):

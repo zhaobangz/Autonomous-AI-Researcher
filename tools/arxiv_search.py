@@ -1,6 +1,11 @@
+import logging
+from typing import List
+
 import arxiv
 from pydantic import BaseModel
-from typing import List
+
+logger = logging.getLogger(__name__)
+
 
 class ArxivPaper(BaseModel):
     id: str
@@ -9,6 +14,7 @@ class ArxivPaper(BaseModel):
     abstract: str
     pdf_url: str
     published: str
+
 
 def search_arxiv(query: str, max_results: int = 5) -> List[ArxivPaper]:
     try:
@@ -30,5 +36,5 @@ def search_arxiv(query: str, max_results: int = 5) -> List[ArxivPaper]:
             ))
         return papers
     except Exception as e:
-        print(f"Error searching arxiv: {e}")
+        logger.error("arXiv search failed for query %r: %s", query, e)
         return []

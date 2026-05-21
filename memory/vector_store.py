@@ -2,11 +2,11 @@
 """
 Vector memory module supporting ChromaDB and Pinecone globally.
 """
-import os
 import uuid
-from pathlib import Path
 from typing import List, Dict, Any
 from pydantic import BaseModel
+
+from config import get_settings
 
 class Hit(BaseModel):
     id: str
@@ -16,20 +16,20 @@ class Hit(BaseModel):
 
 class VectorStore:
     def __init__(self, run_id: str):
+        settings = get_settings()
         self.run_id = run_id
-        self.backend = os.getenv("VECTOR_BACKEND", "chroma")
-        
+        self.backend = settings.vector_backend
+
         if self.backend == "chroma":
             import chromadb
-            base_dir = Path(os.getenv("RUNS_DIR", "./runs")).resolve()
-            run_chroma_dir = base_dir / run_id / "chroma"
+            run_chroma_dir = settings.runs_dir / run_id / "chroma"
             run_chroma_dir.mkdir(parents=True, exist_ok=True)
             self.client = chromadb.PersistentClient(path=str(run_chroma_dir))
             self.collection = self.client.get_or_create_collection("research_context")
         elif self.backend == "pinecone":
             from pinecone import Pinecone, ServerlessSpec
-            pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-            index_name = os.getenv("PINECONE_INDEX", "research-context")
+            pc = Pinecone(api_key=settings.pinecone_api_key)
+            index_name = settings.pinecone_index
             if index_name not in [i.name for i in pc.list_indexes()]:
                 pc.create_index(
                     name=index_name,
@@ -79,4 +79,4 @@ class VectorStore:
                 t = m.get("text", "")
                 hits.append(Hit(id=match.id, text=t, metadata=m, score=match.score))
             return hits
-        return []
+        raise RuntimeError(f"Unknown vector backend: {self.backend}")

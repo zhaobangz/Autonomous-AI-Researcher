@@ -1,9 +1,9 @@
-import os, json, uuid
+import json, uuid
 import asyncio
 import networkx as nx
 import numpy as np
-from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, List
+from config import get_settings
 from memory.embeddings import embed
 
 EMBEDDING_DIMENSION = 384
@@ -40,13 +40,15 @@ def _cosine_sim(a: Any, b: Any) -> float:
     return float(np.dot(a_arr, b_arr) / denom)
 
 class KnowledgeGraph:
-    _lock: Optional[asyncio.Lock] = None
-
     def __init__(self):
-        base_dir = Path(os.getenv("RUNS_DIR", "./runs")).resolve()
+        base_dir = get_settings().runs_dir
         base_dir.mkdir(parents=True, exist_ok=True)
         self.graph_path = base_dir / "global_graph.json"
         self.graph = self._load_graph()
+        # Instance-level asyncio.Lock binds to whichever loop is running at
+        # construction time — KnowledgeGraph is always built inside the agent
+        # event loop, so this avoids the cross-loop bug from a shared class lock.
+        self._lock = asyncio.Lock()
 
     def _load_graph(self) -> nx.DiGraph:
         if not self.graph_path.exists():
@@ -68,14 +70,8 @@ class KnowledgeGraph:
                 pass
             return nx.DiGraph()
 
-    @classmethod
-    def _get_lock(cls) -> asyncio.Lock:
-        """Lazily create the asyncio.Lock (must be in a running loop)."""
-        if cls._lock is None:
-            cls._lock = asyncio.Lock()
-        return cls._lock
-
     def save(self):
+        # Always call via asyncio.to_thread(self.save) from async contexts.
         self.graph_path.write_text(json.dumps(nx.node_link_data(self.graph, edges="links")))
 
     async def add_paper(self, title, url, summary, run_id):
@@ -83,9 +79,8 @@ class KnowledgeGraph:
         node_id = url if url else str(uuid.uuid4())
         # Compute embedding OUTSIDE the lock to avoid blocking
         new_emb = _coerce_embedding(await asyncio.to_thread(embed, summary))
-        
-        lock = self._get_lock()
-        async with lock:
+
+        async with self._lock:
             self.graph.add_node(node_id, title=title, url=url, summary=summary, run_id=run_id, embedding=_embedding_to_json(new_emb))
             for other_id, other_data in list(self.graph.nodes(data=True)):
                 if other_id == node_id or "embedding" not in other_data: continue
