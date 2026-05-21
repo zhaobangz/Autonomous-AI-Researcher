@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 .env.bak
+.env.local
+.env.*.local
+*.bak
 
 # ── Run artefacts ─────────────────────────────────────────────────────────────
 # Ignore everything under runs/ except the curated demo run below.
