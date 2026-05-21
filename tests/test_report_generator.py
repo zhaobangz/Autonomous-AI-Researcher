@@ -311,3 +311,4 @@ class TestReturnContract:
         assert set(paths.keys()) == {"report_md", "report_pdf_path"}
         assert paths["report_md"].endswith("report.md")
         assert paths["report_pdf_path"].endswith("report.pdf")
+ 
