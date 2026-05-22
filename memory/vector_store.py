@@ -14,6 +14,16 @@ class Hit(BaseModel):
     metadata: Dict[str, Any]
     score: float
 
+
+class _ChromaEmbeddingFunction:
+    """Adapter that keeps Chroma on the project's embedding provider."""
+
+    def __call__(self, input):
+        from memory.embeddings import embed
+
+        embeddings = embed(list(input))
+        return embeddings.tolist()
+
 class VectorStore:
     def __init__(self, run_id: str):
         settings = get_settings()
@@ -25,7 +35,10 @@ class VectorStore:
             run_chroma_dir = settings.runs_dir / run_id / "chroma"
             run_chroma_dir.mkdir(parents=True, exist_ok=True)
             self.client = chromadb.PersistentClient(path=str(run_chroma_dir))
-            self.collection = self.client.get_or_create_collection("research_context")
+            self.collection = self.client.get_or_create_collection(
+                "research_context",
+                embedding_function=_ChromaEmbeddingFunction(),
+            )
         elif self.backend == "pinecone":
             from pinecone import Pinecone, ServerlessSpec
             pc = Pinecone(api_key=settings.pinecone_api_key)
@@ -59,7 +72,12 @@ class VectorStore:
 
     def query(self, text: str, k: int = 5) -> List[Hit]:
         if self.backend == "chroma":
-            results = self.collection.query(query_texts=[text], n_results=k)
+            from memory.embeddings import embed
+
+            results = self.collection.query(
+                query_embeddings=[embed(text).tolist()],
+                n_results=k,
+            )
             hits = []
             if results and results.get("documents") and results["documents"][0]:
                 docs = results["documents"][0]

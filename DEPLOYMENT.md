@@ -1,46 +1,54 @@
-# Deployment Guide — GitHub Pages
+# Deployment Guide — Vercel
 
-This document outlines the steps to deploy the static landing page for the **Autonomous AI Researcher** project.
+This repository now includes a Vercel-ready public site for the **Autonomous AI Researcher** project.
 
-## 1. DNS Configuration (Apex Domain)
+The public deployment is intentionally lightweight:
 
-To point your custom domain (`research.autonomous-ai.io`) to GitHub Pages, configure the following DNS records with your provider:
+- `index.html` serves the prompt interface.
+- `api/chat.js` calls OpenAI from a server-side Vercel Function.
+- `.vercelignore` excludes local Python agent code, run artifacts, virtual environments, and secrets from the Vercel bundle.
 
-### IPv4 Records (A)
-| Type | Host | Value |
-|------|------|-------|
-| A | @ | 185.199.108.153 |
-| A | @ | 185.199.109.153 |
-| A | @ | 185.199.110.153 |
-| A | @ | 185.199.111.153 |
+The full Streamlit/FastAPI/Docker research loop remains available for local or container deployment, but it is not the public Vercel surface.
 
-### IPv6 Records (AAAA)
-| Type | Host | Value |
-|------|------|-------|
-| AAAA | @ | 2606:50c0:8000::153 |
-| AAAA | @ | 2606:50c0:8001::153 |
-| AAAA | @ | 2606:50c0:8002::153 |
-| AAAA | @ | 2606:50c0:8003::153 |
+## Required Vercel Environment Variables
 
-### Subdomain (CNAME)
-| Type | Host | Value |
-|------|------|-------|
-| CNAME | www | <your-username>.github.io |
+Set these in **Vercel Project Settings -> Environment Variables**:
 
----
+| Name | Required | Purpose |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | Yes | Server-side key used by `/api/chat`. Never expose this in browser code. |
+| `OPENAI_MODEL` | No | Public prompt endpoint model. Defaults to `gpt-4o-mini`. |
+| `SITE_ACCESS_TOKEN` | No | Optional access code to limit public use of paid API calls. |
+| `SITE_RATE_LIMIT_PER_MINUTE` | No | Best-effort per-instance rate limit. Defaults to `6`. |
+| `PUBLIC_SITE_ORIGIN` | No | Comma-separated allowed origins for custom domains. |
 
-## 2. GitHub Pages Settings
+## Recommended Project Name
 
-1.  Navigate to **Settings → Pages** in the GitHub repository.
-2.  Set the **Source** to `Deploy from a branch`.
-3.  Select the `main` branch and the `/` (root) folder (or `docs` if files were moved).
-4.  Enter the custom domain: `research.autonomous-ai.io`.
-5.  **[CRITICAL]** Wait for the DNS records to propagate and for the TLS certificate (Let's Encrypt) to be issued.
-6.  **[ACTION REQUIRED]** Once the certificate is ready, check the box **"Enforce HTTPS"** to ensure all traffic is secure.
+Use `autonomous-ai-researcher` as the Vercel project name. It matches the project mission directly and should produce a URL in this form when available:
 
----
+```text
+https://autonomous-ai-researcher.vercel.app
+```
 
-## 3. Analytics & Monitoring
+If Vercel reports that the generated domain is unavailable, use the exact URL printed by the deploy command rather than guessing.
 
-- **Analytics**: Plausible Analytics is pre-configured in `index.html`. Dashboard URL: `https://plausible.io/research.autonomous-ai.io`
-- **Uptime Monitoring**: Configure a check for `https://research.autonomous-ai.io` using [Better Stack](https://betterstack.com/) or [UptimeRobot](https://uptimerobot.com/).
+## Deploy
+
+```bash
+npx vercel deploy --prod
+```
+
+During first-time setup:
+
+- Link the directory to a new Vercel project.
+- Use `autonomous-ai-researcher` for the project name.
+- Keep the build command as `npm run build`.
+- Set `OPENAI_API_KEY` before or immediately after deployment.
+
+## Verify
+
+After deployment:
+
+1. Open the production URL printed by Vercel.
+2. Submit a short research prompt.
+3. Confirm the response appears and browser devtools do not show `OPENAI_API_KEY` in any client-side source or network payload.

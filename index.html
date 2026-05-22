@@ -4,143 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="index, follow">
-    <meta name="theme-color" content="#0f172a">
-    <title>Autonomous AI Researcher — Scientific Insights at Scale</title>
-    <meta name="description" content="Conduct end-to-end scientific research with an autonomous multi-agent system. From literature review to experiments and reports, all in one platform.">
-    <link rel="canonical" href="https://research.autonomous-ai.io/">
-
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <link rel="manifest" href="/manifest.json">
-
+    <meta name="theme-color" content="#f7f8fb">
+    <title>Autonomous AI Researcher</title>
+    <meta name="description" content="A focused public interface for testing research prompts with the Autonomous AI Researcher project.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Autonomous AI Researcher">
-    <meta property="og:url" content="https://research.autonomous-ai.io/">
-    <meta prope    <meta prop content="Autonomous AI Researcher — Scientific Ins    <meta prope    <meta prop content="Autonomous AI Researcher — Sciit    <meta prope    <meta prop content="Autonom, a    <meta prope    <meta prop content="Autmous A    <meta prope    <meta prop content="Autonomous AI Researcher — Scientiou    <meta prope    <meta prop content="Autonomous AI Researcher — Scientific Ins    <meta prope    <meta prop content="Autonomous AI Researcher — Sciit    <meta prope    <meta prop conom    <meta prope    <meta prop content="Autonomous AI Researcher �eta name="twitter:card" content="summary_large_image">
-                                                                                Insights at Scale">
-    <meta name="twitter:description" content="Autonomous multi-agent research: literature synthesis, sandboxed experiments, critique, debate, and reports.">
-    <meta name="twitter:image" content="https://research.autonomous-ai.io/assets/images/og-card.png">
-    <meta name="twitter:image:alt" content="Autonomous AI Researcher multi-agent research workflow preview">
+    <meta property="og:title" content="Autonomous AI Researcher">
+    <meta property="og:description" content="Turn a research prompt into a concise, critique-aware AI response through a secure server-side OpenAI API route.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Autonomous AI Researcher">
+    <meta name="twitter:description" content="A secure public prompt interface for the Autonomous AI Researcher project.">
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <script src="/assets/js/app.js" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#workspace">Skip to workspace</a>
 
-    <link rel="preconnect" href="https://plausible.io">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="assets/css/styles.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization",
-          "@id": "https://research.autonomous-ai.io/#organization",
-          "name": "Autonomous AI Researcher Project",
-          "url": "https://research.autonomous-ai.io/",
-          "logo": "https://research.autonomous-ai.io/assets/images/logo.png",
-          "sameAs": ["https://github.com/zhaobangz/Autonomous-AI-Researcher"]
-        },
-        {
-          "@type": "WebSite",
-          "@id": "https://research.autonomous-ai.io/#website",
-          "name": "Autonomous AI Researcher",
-                                                    ",
-                                                                      scientific research platform.",
-          "publisher": {"@id": "https://research.autonomous-ai.io/#organization"}
-        },
-        {
-          "@type": "SoftwareSourceCode",
-          "@id": "https://research.autonomous-ai.io/#source-code",
-          "nam          "nam          "nam              "codeRepository": "https://github.com/zhaobangz/Autonomous-AI-Researcher",
-          "programmingLanguage": ["Python", "HTML", "CSS", "JavaScript"],
-          "applicationCategory": "ResearchApplication",
-          "description": "A multi-agent system that searches literature, executes sandboxed experiments, critiques outputs, and generates research reports."
-        },
-        {
-          "@type": "BreadcrumbList",
-          "@id": "https://research.autonomous-ai.io/#breadcrumb",
-          "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://research.autonomous-ai.io/"}]
-        }
-      ]
-    }
-    </script>
-
-    <script>
-      window.plausible = window.plausible || function () {
-        (window.plausible.q = window.plausible.q || []).push(arguments);
-      };
-    </script>
-    <script defer data-doma    <scrarch.autonomous-ai.io" src="https://plausib    <script defer data-doma    <scrarch.autonomous-ai.io" src="htcl    <script defer data-doma    <scrarch.autonomous-ai.io" src="https://plausib    <script defer data-doma    <scrarch.autonomouss="    <script defer data-doma    <scrarch.autonomous-ai.io" src="httref="/" class="logo" aria-label="Autonomous AI Researcher home">
-                    <img src="assets/images/logo.svg" alt="" width="36" height="36" aria-hidden="true">
-                    Researcher<span>.AI</span>
-                </a>
-                <ul class="nav-links">
-                    <li><a href="#features">Features</a></li>
-                    <li><a href="#architecture">Architecture</a></li>
-                    <li><a href="https://github.com/zhaobangz/Autonomous-AI-Researcher" data-analytics-event="Outbound GitHub Nav">GitHub</a></li>
-                </ul>
-                                                                                class="btn      rimary" data-analytics-event="Primary CTA GitHub">Star on GitHub</a>
+    <header class="site-header">
+        <div class="shell header-inner">
+            <a class="brand" href="/" aria-label="Autonomous AI Researcher home">
+                <span class="brand-mark" aria-hidden="true">AIR</span>
+                <span>Autonomous AI Researcher</span>
+            </a>
+            <nav class="top-nav" aria-label="Primary navigation">
+                <a href="https://github.com/zhaobangz/Autonomous-AI-Researcher" rel="noreferrer">GitHub</a>
             </nav>
         </div>
     </header>
 
-    <main id="main">
-        <section class="hero container" aria-labelledby="hero-title">
-            <div class="hero-content">
-                <p class="eyebrow">Planner · Researcher · Coder · Critic · Debater</p>
-                <h1 id="hero-title">Autonomous Scientific Research for the Mo                <h1 id="hero-title">Autonomous Scientific Research for the Mo                <h1 id="h r                <h1 id="hero-title">Autonomclus                <h1re                <h1 id="hero-title">A                  <h1 id="hero-title">Autonomous Scientific Rons">
-                    <a href="https://github.com/zhaobangz/Autonomous-AI-Researcher" class="btn btn-primary" data-analytics-event="Primary CTA Get Started">Get Started</a>
-                    <a href="https://github.com/zhaobangz/Autonomous-AI-Researcher#quickstart" class="btn btn-secondary" data-analytics-event="Secondary CTA Quickstart">Read Quickstart</a>
-                </div>
+    <main id="workspace" class="workspace shell">
+        <section class="mission-panel" aria-labelledby="mission-title">
+            <div>
+                <p class="eyebrow">Planner / Researcher / Critic</p>
+                <h1 id="mission-title">Autonomous research prompts, checked through a server-side AI workflow.</h1>
             </div>
-            <div class="hero-image" aria-label="            <div clrcher workflow preview">
-                <picture>
-                    <source srcset="assets/images/hero.svg"                     <source srcset="assets/images/hero.svg"                     <source sd                     <source srcset="assets/images/hero.svg"                     <source srcset="assets/images/hero.svg"                     <source sd                     <source srcset="assets/images/hero.svg"                     <source srcset="assets/images/hero.svg"                     <source sd                     <source srcset="assets/imagesss="section-title">
-                <p class="eyebrow">Core capabilities</p>
-                <h2 id="features-title">Built for Scientists, Powered by Agents</h2>
-                                                                                                                                                                                                      le class="card">
-                         it                         it                         it                         it        sem                        in                         it                         it                         it                         it        sem                        in                         it                         it                         it                         it        sem                        in                         it                         it                         it                         it        sem                        in                         it                         it                         it     p                         it                         it iv                         it                         it                         itainer" aria-labelledby="architecture-title">
-            <div class="section-title">
-                <p class="eyebrow">System design</p>
-                <h2 id="architecture-title">A Transparent Research Loop</h2>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       </ol>
+            <div class="signal-map" aria-label="Research workflow preview">
+                <span class="signal-node node-input">Prompt</span>
+                <span class="signal-line line-a" aria-hidden="true"></span>
+                <span class="signal-node node-plan">Plan</span>
+                <span class="signal-line line-b" aria-hidden="true"></span>
+                <span class="signal-node node-answer">Answer</span>
+                <span class="signal-pulse" aria-hidden="true"></span>
+            </div>
         </section>
 
-        <sect        <sect        <sect        <sect        <sece">
-            <div>
-                <p class="eyebrow">Ready to launch</p>
-                <h2 id="cta-title">Explore the code and run your first research task.</h2>
-                <p>Clone the repository, add your own LLM API key, and start with the included Streamlit dashboard or FastAPI endpoints.</p>
-            </div>
-            <a href="https://github.com/zhaobangz/Autonomous-AI-Researcher" class="btn btn-primary" data-analytics-event="Footer CTA GitHub">Open Repository</a>
+        <section class="app-grid" aria-label="Research prompt tool">
+            <form id="prompt-form" class="prompt-panel">
+                <div class="field-group">
+                    <label for="prompt">Research prompt</label>
+                    <textarea id="prompt" name="prompt" maxlength="2000" required>Analyze one promising direction for using autonomous AI agents to accelerate literature reviews in scientific research.</textarea>
+                    <div class="field-meta">
+                        <span id="prompt-count">0 / 2000</span>
+                        <span>OpenAI key stays on the server.</span>
+                    </div>
+                </div>
+
+                <div class="field-group compact">
+                    <label for="access-token">Access code</label>
+                    <input id="access-token" name="access-token" type="password" autocomplete="off" placeholder="Optional">
+                </div>
+
+                <div class="button-row">
+                    <button id="submit-button" type="submit">Run prompt</button>
+                    <button id="clear-button" type="button" class="secondary-button">Clear</button>
+                </div>
+            </form>
+
+            <section class="response-panel" aria-live="polite" aria-labelledby="response-title">
+                <div class="response-header">
+                    <div>
+                        <p class="eyebrow">Model response</p>
+                        <h2 id="response-title">Research Brief</h2>
+                    </div>
+                    <span id="status-pill" class="status-pill">Ready</span>
+                </div>
+                <pre id="response-output">Awaiting research brief.</pre>
+            </section>
         </section>
     </main>
 
     <footer class="site-footer">
-        <div class="container footer-content">
-            <p>&copy; 2026 Autonomous AI Researcher Project.</p>
-            <nav aria-label="Footer navigation">
-                <a href="/">Home</a>
-                <a href="/sitemap.xml">Sitemap</a>
-                <a href="https://github.com/zhaobangz/Autonomous-AI-Researcher" data-analytics-event="Footer GitHub Link">GitHub</a>
-            </nav>
+        <div class="shell footer-inner">
+            <span>Autonomous AI Researcher Project</span>
+            <a href="/sitemap.xml">Sitemap</a>
         </div>
     </footer>
-
-    <script>
-      (function () {
-        function track(name, props) {
-          if (typeof window.plausible === 'function') {
-            window.plausible(name, { props: props || {} });
-          }
-        }
-
-        document.querySelectorAll('[data-analytics-event]').forEach(function (element) {
-          element.addEventListener('click', func          element            element.addEventListener('click', func          element            element.addEventListener('click', func          element            element.addEven        document.querySelectorAll(          element.addEventListcti          element.addEventListener('click', fcl          element.addEventListener('click', func          el {hre          element.addEventListener('click', fun
-          });
-        });
-      }());
-    </script>
 </body>
 </html>

@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     )
 
     # ── LLM provider ───────────────────────────────────────────────────────
-    llm_provider: Literal["openai", "anthropic"] = Field(
+    llm_provider: str = Field(
         default="openai",
         description="Which LLM provider to use.",
     )
@@ -149,6 +149,11 @@ class Settings(BaseSettings):
             )
         return v
 
+    @field_validator("llm_provider")
+    @classmethod
+    def _normalize_provider(cls, v: str) -> str:
+        return v.lower().strip()
+
     # ── Helpers ───────────────────────────────────────────────────────────
     @property
     def active_llm_api_key(self) -> Optional[str]:
@@ -182,4 +187,6 @@ from functools import lru_cache
 
 @lru_cache()
 def get_settings() -> Settings:
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return Settings(_env_file=None)
     return Settings()

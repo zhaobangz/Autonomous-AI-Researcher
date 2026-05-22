@@ -42,7 +42,7 @@ class LLMClient:
         env_var = "OPENAI_API_KEY" if self.provider == "openai" else "ANTHROPIC_API_KEY"
         api_key = (get_settings().active_llm_api_key or "").strip()
         if not api_key or api_key.startswith("your_"):
-            raise RuntimeError(
+            raise OSError(
                 f"[LLMClient] {env_var} is not configured. Copy .env.example to .env "
                 "and set a real key before running agent calls."
             )
@@ -75,7 +75,7 @@ class LLMClient:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_not_exception_type((RuntimeError, ValueError, TypeError)),
+        retry=retry_if_not_exception_type((OSError, RuntimeError, ValueError, TypeError)),
         reraise=True,
     )
     def chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000) -> str:
