@@ -2,6 +2,9 @@ import tempfile, time, shutil, docker
 from pathlib import Path
 from typing import Optional, Dict, Any
 
+EXECUTOR_IMAGE = "autonomous-ai-researcher-executor:latest"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 class PythonExecutor:
     def __init__(self):
         try:
@@ -9,6 +12,19 @@ class PythonExecutor:
             self.client.ping()
         except Exception as e:
             raise RuntimeError(f"[PythonExecutor] Docker unavailable: {e}") from e
+
+        self._ensure_executor_image()
+
+    def _ensure_executor_image(self) -> None:
+        try:
+            self.client.images.get(EXECUTOR_IMAGE)
+        except docker.errors.ImageNotFound:
+            self.client.images.build(
+                path=str(REPO_ROOT),
+                dockerfile="executor.Dockerfile",
+                tag=EXECUTOR_IMAGE,
+                rm=True,
+            )
 
     def execute(self, code: str, timeout: int = 120, work_dir: Optional[Path] = None) -> Dict[str, Any]:
         tmpdir = tempfile.mkdtemp()
@@ -19,8 +35,8 @@ class PythonExecutor:
             output_dir = Path(tmpdir) / "output"
             output_dir.mkdir()
             container = self.client.containers.run(
-                image="python:3.11-slim",
-                command=["sh", "-c", "pip install numpy pandas matplotlib scipy --quiet && python /code/experiment.py"],
+                image=EXECUTOR_IMAGE,
+                command=["python", "/code/experiment.py"],
                 volumes={
                     tmpdir: {"bind": "/code", "mode": "ro"},
                     str(output_dir): {"bind": "/output", "mode": "rw"},

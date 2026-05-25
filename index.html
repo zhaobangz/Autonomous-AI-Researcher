@@ -24,19 +24,27 @@
         <div class="shell header-inner">
             <a class="brand" href="/" aria-label="Autonomous AI Researcher home">
                 <span class="brand-mark" aria-hidden="true">AIR</span>
-                <span>Autonomous AI Researcher</span>
+                <span class="brand-copy">
+                    <span class="brand-name">Autonomous AI Researcher</span>
+                    <span class="version-badge">v2.0 · CS Project</span>
+                </span>
             </a>
             <nav class="top-nav" aria-label="Primary navigation">
-                <a href="https://github.com/zhaobangz/Autonomous-AI-Researcher" rel="noreferrer">GitHub</a>
+                <a href="https://github.com/zhaobangz/Autonomous-AI-Researcher" target="_blank" rel="noreferrer">GitHub</a>
             </nav>
         </div>
     </header>
 
     <main id="workspace" class="workspace shell">
         <section class="mission-panel" aria-labelledby="mission-title">
-            <div>
-                <p class="eyebrow">Planner / Researcher / Critic</p>
+            <div class="mission-copy">
+                <div class="agent-pills" aria-label="Workflow agents">
+                    <span class="agent-pill pill-planner">Planner</span>
+                    <span class="agent-pill pill-researcher">Researcher</span>
+                    <span class="agent-pill pill-critic">Critic</span>
+                </div>
                 <h1 id="mission-title">Autonomous research prompts, checked through a server-side AI workflow.</h1>
+                <p class="hero-sub">Submit a research question. The pipeline plans, searches, and critiques — automatically.</p>
             </div>
             <div class="signal-map" aria-label="Research workflow preview">
                 <span class="signal-node node-input">Prompt</span>
@@ -44,39 +52,52 @@
                 <span class="signal-node node-plan">Plan</span>
                 <span class="signal-line line-b" aria-hidden="true"></span>
                 <span class="signal-node node-answer">Answer</span>
+                <span class="signal-line line-c" aria-hidden="true"></span>
+                <span class="signal-node node-critic">Critic</span>
                 <span class="signal-pulse" aria-hidden="true"></span>
             </div>
         </section>
 
         <section class="app-grid" aria-label="Research prompt tool">
-            <form id="prompt-form" class="prompt-panel">
-                <div class="field-group">
-                    <label for="prompt">Research prompt</label>
-                    <textarea id="prompt" name="prompt" maxlength="2000" required>Analyze one promising direction for using autonomous AI agents to accelerate literature reviews in scientific research.</textarea>
-                    <div class="field-meta">
-                        <span id="prompt-count">0 / 2000</span>
-                        <span>OpenAI key stays on the server.</span>
+            <div class="card prompt-card">
+                <form id="prompt-form" class="prompt-panel">
+                    <div class="field-group">
+                        <p class="section-label">Your question</p>
+                        <label for="prompt">Research prompt</label>
+                        <textarea id="prompt" name="prompt" maxlength="2000" required>Analyze one promising direction for using autonomous AI agents to accelerate literature reviews in scientific research.</textarea>
+                        <div class="char-bar" aria-hidden="true">
+                            <span class="char-bar-track">
+                                <span class="char-bar-fill"></span>
+                            </span>
+                        </div>
+                        <div class="field-meta">
+                            <span id="prompt-count">0 / 2000</span>
+                            <span>OpenAI key stays on the server.</span>
+                        </div>
                     </div>
-                </div>
 
-                <div class="field-group compact">
-                    <label for="access-token">Access code</label>
-                    <input id="access-token" name="access-token" type="password" autocomplete="off" placeholder="Optional">
-                </div>
+                    <div class="field-group compact">
+                        <label for="access-token">Access code</label>
+                        <input id="access-token" name="access-token" type="password" autocomplete="off" placeholder="Optional">
+                    </div>
 
-                <div class="button-row">
-                    <button id="submit-button" type="submit">Run prompt</button>
-                    <button id="clear-button" type="button" class="secondary-button">Clear</button>
-                </div>
-            </form>
+                    <div class="button-row">
+                        <button id="submit-button" type="submit">Run prompt</button>
+                        <button id="clear-button" type="button" class="secondary-button">Clear</button>
+                    </div>
+                </form>
+            </div>
 
-            <section class="response-panel" aria-live="polite" aria-labelledby="response-title">
+            <section class="response-panel card" aria-live="polite" aria-labelledby="response-title">
                 <div class="response-header">
                     <div>
                         <p class="eyebrow">Model response</p>
                         <h2 id="response-title">Research Brief</h2>
                     </div>
-                    <span id="status-pill" class="status-pill">Ready</span>
+                    <div class="response-actions">
+                        <button id="copy-button" type="button" class="icon-button">Copy</button>
+                        <span id="status-pill" class="status-pill">Ready</span>
+                    </div>
                 </div>
                 <pre id="response-output">Awaiting research brief.</pre>
             </section>
@@ -85,7 +106,7 @@
 
     <footer class="site-footer">
         <div class="shell footer-inner">
-            <span>Autonomous AI Researcher Project</span>
+            <span>Built for CS class · Powered by OpenAI</span>
             <a href="/sitemap.xml">Sitemap</a>
         </div>
     </footer>
