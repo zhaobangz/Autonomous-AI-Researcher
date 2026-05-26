@@ -46,6 +46,8 @@ htmlcov/
 # ── Node / static build ────────────────────────────────────────────────────────
 node_modules/
 npm-debug.log*
+_site/
+.vercel/
 
 # ── macOS ─────────────────────────────────────────────────────────────────────
 .DS_Store
@@ -72,4 +74,3 @@ Desktop.ini
 # Local test 
   output
 pytest_output.txt
-.vercel

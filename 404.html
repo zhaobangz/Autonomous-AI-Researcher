@@ -4,20 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#fff8ec">
     <title>Page Not Found | Autonomous AI Researcher</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
 </head>
-<body>
-    <main class="workspace shell">
-        <section class="response-panel">
-            <div class="response-header">
-                <div>
-                    <p class="eyebrow">404</p>
-                    <h1>Page not found.</h1>
-                </div>
-                <a class="status-pill" href="/">Home</a>
+<body class="not-found-page">
+    <a class="skip-link" href="#not-found">Skip to page content</a>
+    <main id="not-found" class="workspace shell">
+        <section class="not-found-card card" aria-labelledby="not-found-title">
+            <div class="not-found-art" aria-hidden="true">
+                <span>🧭</span>
             </div>
-            <pre>The requested path does not exist.</pre>
+            <p class="eyebrow">404</p>
+            <h1 id="not-found-title">This research path wandered off the map.</h1>
+            <p class="hero-sub">The page you requested does not exist, but the lab is still ready for a new question.</p>
+            <a class="home-button" href="/">Back to home</a>
         </section>
     </main>
 </body>

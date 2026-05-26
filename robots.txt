@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://autonomous-ai-researcher.vercel.app/sitemap.xml
+Sitemap: https://research.autonomous-ai.io/sitemap.xml

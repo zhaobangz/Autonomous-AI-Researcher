@@ -1,4 +1,10 @@
-# Autonomous AI Researcher 🔬🤖
+# Autonomous AI Researcher
+
+**A playful CS class research lab for planning, running, critiquing, and exporting AI-assisted research briefs.**
+
+![Project](https://img.shields.io/badge/v2.0-CS%20Project-6d5dfc)
+![UI](https://img.shields.io/badge/UI-Static%20Site%20%2B%20Streamlit-0f9f8f)
+![Agents](https://img.shields.io/badge/Agents-Planner%20%7C%20Researcher%20%7C%20Coder%20%7C%20Critic%20%7C%20Debater-f6a623)
 
 An autonomous multi-agent system that conducts end-to-end scientific research: it searches academic literature, synthesises findings, writes and executes Python experiments in a sandboxed Docker container, critiques its own results through an adversarial debate loop, and produces structured Markdown + PDF reports.
 
@@ -136,6 +142,19 @@ pytest tests/ -v
 # Run with live reload
 uvicorn api.server:app --reload
 ```
+
+## Public GitHub Pages Site
+
+The static public website is deployed with GitHub Pages from the generated `_site/` artifact.
+
+```bash
+npm run build
+python3 -m http.server 3000 --directory _site
+```
+
+Open **http://localhost:3000** to preview it locally.
+
+GitHub Pages cannot run server code or store `OPENAI_API_KEY`, so live prompt responses require a separately hosted HTTPS backend. Set that endpoint in `assets/js/config.js`.
 
 ---
 

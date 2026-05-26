@@ -2,9 +2,9 @@
   "name": "autonomous-ai-researcher-site",
   "version": "1.0.0",
   "private": true,
-  "description": "Public Vercel interface for Autonomous AI Researcher",
+  "description": "Static GitHub Pages interface for Autonomous AI Researcher",
   "scripts": {
-    "build": "node scripts/validate-site.js",
+    "build": "node scripts/build-pages.js",
     "smoke:chat": "node scripts/smoke-chat.js",
     "test:site": "node scripts/validate-site.js"
   },

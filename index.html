@@ -4,25 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="index, follow">
-    <meta name="theme-color" content="#f7f8fb">
+    <meta name="theme-color" content="#fff8ec">
     <title>Autonomous AI Researcher</title>
-    <meta name="description" content="A focused public interface for testing research prompts with the Autonomous AI Researcher project.">
+    <meta name="description" content="A warm, student-friendly interface for exploring research questions with a multi-agent AI workflow.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Autonomous AI Researcher">
     <meta property="og:title" content="Autonomous AI Researcher">
-    <meta property="og:description" content="Turn a research prompt into a concise, critique-aware AI response through a secure server-side OpenAI API route.">
+    <meta property="og:description" content="Ask a research question and watch a planner, researcher, and critic shape it into a concise brief.">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Autonomous AI Researcher">
-    <meta name="twitter:description" content="A secure public prompt interface for the Autonomous AI Researcher project.">
-    <link rel="stylesheet" href="/assets/css/styles.css">
-    <script src="/assets/js/app.js" defer></script>
+    <meta name="twitter:description" content="A playful CS project interface for multi-agent research prompts.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%236d5dfc'/%3E%3Cpath d='M18 42 30 16h5l12 26h-7l-2-5H27l-2 5h-7Zm11-11h7l-3.5-8.8L29 31Z' fill='%23fff8ec'/%3E%3Ccircle cx='48' cy='18' r='6' fill='%23f6a623'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="assets/js/config.js" defer></script>
+    <script src="assets/js/app.js" defer></script>
 </head>
 <body>
     <a class="skip-link" href="#workspace">Skip to workspace</a>
 
     <header class="site-header">
         <div class="shell header-inner">
-            <a class="brand" href="/" aria-label="Autonomous AI Researcher home">
+            <a class="brand" href="./" aria-label="Autonomous AI Researcher home">
                 <span class="brand-mark" aria-hidden="true">AIR</span>
                 <span class="brand-copy">
                     <span class="brand-name">Autonomous AI Researcher</span>
@@ -35,79 +40,123 @@
         </div>
     </header>
 
-    <main id="workspace" class="workspace shell">
-        <section class="mission-panel" aria-labelledby="mission-title">
+    <main id="workspace" class="workspace">
+        <section class="hero-section shell" aria-labelledby="mission-title">
             <div class="mission-copy">
+                <p class="eyebrow">Research lab in your browser</p>
+                <h1 id="mission-title">Ask a big question. Let five tiny agents organize the first draft.</h1>
+                <p class="hero-sub">Autonomous AI Researcher turns a research prompt into a planned, critiqued brief so classmates can inspect the reasoning instead of staring at a blank page.</p>
                 <div class="agent-pills" aria-label="Workflow agents">
                     <span class="agent-pill pill-planner">Planner</span>
                     <span class="agent-pill pill-researcher">Researcher</span>
+                    <span class="agent-pill pill-coder">Coder</span>
                     <span class="agent-pill pill-critic">Critic</span>
+                    <span class="agent-pill pill-debater">Debater</span>
                 </div>
-                <h1 id="mission-title">Autonomous research prompts, checked through a server-side AI workflow.</h1>
-                <p class="hero-sub">Submit a research question. The pipeline plans, searches, and critiques — automatically.</p>
             </div>
-            <div class="signal-map" aria-label="Research workflow preview">
+
+            <div class="signal-map" aria-label="Planner to researcher to critic workflow preview">
                 <span class="signal-node node-input">Prompt</span>
                 <span class="signal-line line-a" aria-hidden="true"></span>
                 <span class="signal-node node-plan">Plan</span>
                 <span class="signal-line line-b" aria-hidden="true"></span>
-                <span class="signal-node node-answer">Answer</span>
+                <span class="signal-node node-research">Research</span>
                 <span class="signal-line line-c" aria-hidden="true"></span>
-                <span class="signal-node node-critic">Critic</span>
+                <span class="signal-node node-critic">Critique</span>
+                <span class="signal-line line-d" aria-hidden="true"></span>
+                <span class="signal-node node-answer">Brief</span>
                 <span class="signal-pulse" aria-hidden="true"></span>
             </div>
         </section>
 
-        <section class="app-grid" aria-label="Research prompt tool">
-            <div class="card prompt-card">
-                <form id="prompt-form" class="prompt-panel">
-                    <div class="field-group">
-                        <p class="section-label">Your question</p>
-                        <label for="prompt">Research prompt</label>
-                        <textarea id="prompt" name="prompt" maxlength="2000" required>Analyze one promising direction for using autonomous AI agents to accelerate literature reviews in scientific research.</textarea>
-                        <div class="char-bar" aria-hidden="true">
-                            <span class="char-bar-track">
-                                <span class="char-bar-fill"></span>
-                            </span>
-                        </div>
-                        <div class="field-meta">
-                            <span id="prompt-count">0 / 2000</span>
-                            <span>OpenAI key stays on the server.</span>
-                        </div>
-                    </div>
+        <section class="how-section shell" aria-labelledby="how-title">
+            <div class="section-kicker">
+                <p class="eyebrow">How it works</p>
+                <h2 id="how-title">A clear pipeline for curious questions.</h2>
+            </div>
+            <div class="how-grid">
+                <article class="how-card">
+                    <span class="how-icon" aria-hidden="true">🧭</span>
+                    <h3>Plan the route</h3>
+                    <p>The Planner breaks a broad question into concrete research steps before the model starts writing.</p>
+                </article>
+                <article class="how-card">
+                    <span class="how-icon" aria-hidden="true">🔎</span>
+                    <h3>Gather context</h3>
+                    <p>The Researcher looks for relevant ideas and keeps the answer focused on evidence, not guesswork.</p>
+                </article>
+                <article class="how-card">
+                    <span class="how-icon" aria-hidden="true">🧪</span>
+                    <h3>Stress-test claims</h3>
+                    <p>The Critic and Debater look for weak spots, risks, and next steps a human reviewer should check.</p>
+                </article>
+                <article class="how-card">
+                    <span class="how-icon" aria-hidden="true">📄</span>
+                    <h3>Share a brief</h3>
+                    <p>The final response is formatted as a readable research brief you can copy, discuss, or revise.</p>
+                </article>
+            </div>
+        </section>
 
-                    <div class="field-group compact">
-                        <label for="access-token">Access code</label>
-                        <input id="access-token" name="access-token" type="password" autocomplete="off" placeholder="Optional">
-                    </div>
-
-                    <div class="button-row">
-                        <button id="submit-button" type="submit">Run prompt</button>
-                        <button id="clear-button" type="button" class="secondary-button">Clear</button>
-                    </div>
-                </form>
+        <section class="tool-section shell" aria-label="Research prompt tool">
+            <div class="workspace-heading">
+                <p class="eyebrow">Try the public prompt</p>
+                <h2>Start with one research question.</h2>
+                <p>Keep it specific enough for a short brief. The public page calls a separately hosted endpoint when one is configured.</p>
             </div>
 
-            <section class="response-panel card" aria-live="polite" aria-labelledby="response-title">
-                <div class="response-header">
-                    <div>
-                        <p class="eyebrow">Model response</p>
-                        <h2 id="response-title">Research Brief</h2>
-                    </div>
-                    <div class="response-actions">
-                        <button id="copy-button" type="button" class="icon-button">Copy</button>
-                        <span id="status-pill" class="status-pill">Ready</span>
-                    </div>
+            <div class="app-grid">
+                <div class="card prompt-card">
+                    <form id="prompt-form" class="prompt-panel">
+                        <div class="field-group">
+                            <p class="section-label">Your question</p>
+                            <label for="prompt">Research prompt</label>
+                            <textarea id="prompt" name="prompt" maxlength="2000" required>Compare two practical ways autonomous AI agents could help students conduct more reliable literature reviews.</textarea>
+                            <div class="char-bar" aria-hidden="true">
+                                <span class="char-bar-track">
+                                    <span class="char-bar-fill"></span>
+                                </span>
+                            </div>
+                            <div class="field-meta">
+                                <span id="prompt-count">0 / 2000</span>
+                                <span>OpenAI key stays on the server.</span>
+                            </div>
+                        </div>
+
+                        <div class="field-group compact">
+                            <label for="access-token">Access code</label>
+                            <input id="access-token" name="access-token" type="password" autocomplete="off" placeholder="Optional">
+                        </div>
+
+                        <div class="button-row">
+                            <button id="submit-button" type="submit">Run prompt</button>
+                            <button id="clear-button" type="button" class="secondary-button">Clear</button>
+                        </div>
+                    </form>
                 </div>
-                <pre id="response-output">Awaiting research brief.</pre>
-            </section>
+
+                <section class="response-panel card" aria-live="polite" aria-labelledby="response-title">
+                    <div class="response-header">
+                        <div>
+                            <p class="eyebrow">Model response</p>
+                            <h2 id="response-title">Research Brief</h2>
+                        </div>
+                        <div class="response-actions">
+                            <button id="copy-button" type="button" class="icon-button">Copy</button>
+                            <span id="status-pill" class="status-pill">Ready</span>
+                        </div>
+                    </div>
+                    <pre id="response-output">Awaiting research brief.</pre>
+                </section>
+            </div>
         </section>
     </main>
 
     <footer class="site-footer">
         <div class="shell footer-inner">
             <span>Built for CS class · Powered by OpenAI</span>
-            <a href="/sitemap.xml">Sitemap</a>
+            <span class="footer-stamp">Made with care for curious classmates</span>
+            <a href="sitemap.xml">Sitemap</a>
         </div>
     </footer>
 </body>

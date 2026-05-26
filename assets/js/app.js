@@ -11,6 +11,10 @@
     const charBarFill = document.querySelector(".char-bar-fill");
 
     const TOKEN_STORAGE_KEY = "air_site_access_token";
+    const siteConfig = window.AIR_SITE_CONFIG || {};
+    const chatEndpoint = typeof siteConfig.chatEndpoint === "string"
+        ? siteConfig.chatEndpoint.trim()
+        : "";
     let copyResetId;
 
     function setStatus(label, isError) {
@@ -62,6 +66,10 @@
     }
 
     async function runPrompt(prompt, accessToken) {
+        if (!chatEndpoint) {
+            throw new Error("This GitHub Pages site is static. Configure assets/js/config.js with a hosted chat endpoint before accepting prompts.");
+        }
+
         const headers = {
             "Content-Type": "application/json",
         };
@@ -74,7 +82,7 @@
         const timeoutId = window.setTimeout(() => controller.abort(), 30000);
 
         try {
-            const response = await fetch("/api/chat", {
+            const response = await fetch(chatEndpoint, {
                 method: "POST",
                 headers,
                 body: JSON.stringify({ prompt }),
