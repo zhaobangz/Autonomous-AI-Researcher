@@ -1,8 +1,8 @@
 # Autonomous AI Researcher
 
-**A playful CS class research lab for planning, running, critiquing, and exporting AI-assisted research briefs.**
+**An open-source research workspace for planning, running, critiquing, and exporting AI-assisted research briefs.**
 
-![Project](https://img.shields.io/badge/v2.0-CS%20Project-6d5dfc)
+![Project](https://img.shields.io/badge/v2.0-Open%20Source-6d5dfc)
 ![UI](https://img.shields.io/badge/UI-Static%20Site%20%2B%20Streamlit-0f9f8f)
 ![Agents](https://img.shields.io/badge/Agents-Planner%20%7C%20Researcher%20%7C%20Coder%20%7C%20Critic%20%7C%20Debater-f6a623)
 
@@ -96,6 +96,21 @@ docker-compose up --build
 ```
 
 Open **http://localhost:8501** in your browser.
+
+### Autonomous / Headless Runs
+
+```bash
+# Single question
+python scripts/run_research.py "Your research question here"
+
+# Batch from file
+python scripts/batch_research.py questions.txt
+
+# GitHub Actions
+# Push to main or manually trigger the "Scheduled Research" workflow.
+# Set RESEARCH_QUESTION and OPENAI_API_KEY (or ANTHROPIC_API_KEY)
+# as repository secrets.
+```
 
 ---
 

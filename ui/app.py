@@ -23,7 +23,7 @@ nest_asyncio.apply()
 
 DEFAULT_QUESTION = (
     "Analyze one practical way autonomous AI agents could make literature "
-    "reviews more reliable for student researchers."
+    "reviews more reliable for independent researchers."
 )
 
 STYLE_BLOCK = """
@@ -537,7 +537,7 @@ def _render_hero() -> None:
     st.markdown(
         """
         <div class="research-hero">
-            <span class="hero-badge">v2.0 · CS Class Project</span>
+            <span class="hero-badge">v2.0 · Open Source</span>
             <h1>Autonomous AI Researcher</h1>
             <p>A friendly control room for turning a question into a planned, tested, and critiqued research brief.</p>
             <div class="agent-pill-row">
@@ -554,7 +554,7 @@ def _render_hero() -> None:
 
 
 def _render_tips() -> None:
-    with st.expander("How it works / Tips", expanded=False):
+    with st.expander("How it works", expanded=False):
         st.markdown(
             """
             <div class="tip-grid">
