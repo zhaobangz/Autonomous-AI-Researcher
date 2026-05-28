@@ -14,6 +14,26 @@ class TestFieldValidation:
         with pytest.raises(ValidationError):
             Settings(max_steps=999)
 
+    def test_unknown_provider_raises(self):
+        with pytest.raises(ValidationError, match="LLM_PROVIDER"):
+            Settings(llm_provider="unknown")
+
+    def test_weak_internal_api_key_raises(self):
+        with pytest.raises(ValidationError, match="placeholder"):
+            Settings(internal_api_key="change_me")
+
+    def test_short_internal_api_key_raises(self):
+        with pytest.raises(ValidationError, match="at least 16"):
+            Settings(internal_api_key="too-short")
+
+    def test_wildcard_allowed_origin_raises(self):
+        with pytest.raises(ValidationError, match="wildcards"):
+            Settings(allowed_origins="*")
+
+    def test_origin_with_path_raises(self):
+        with pytest.raises(ValidationError, match="paths"):
+            Settings(allowed_origins="https://example.com/app")
+
 
 class TestValidateLlmReady:
     def test_missing_openai_key_raises(self, monkeypatch):

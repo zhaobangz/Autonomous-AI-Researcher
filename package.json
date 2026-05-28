@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node scripts/build-pages.js",
     "smoke:chat": "node scripts/smoke-chat.js",
+    "test:live-chat": "node scripts/test-live-chat.js",
     "test:site": "node scripts/validate-site.js"
   },
   "engines": {

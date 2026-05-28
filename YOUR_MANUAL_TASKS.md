@@ -21,7 +21,7 @@ I fixed the code and configuration issues that can be handled without your priva
 3. Optional keys:
    - `TAVILY_API_KEY` — better web search quality; otherwise DuckDuckGo fallback is used.
    - `PINECONE_API_KEY` + `VECTOR_BACKEND=pinecone` — cloud vector DB; otherwise local ChromaDB is used.
-   - `INTERNAL_API_KEY` — protects API endpoints with an `X-API-Key` header.
+   - `INTERNAL_API_KEY` — protects REST and WebSocket API endpoints with an `X-API-Key` header; use a random value of at least 16 characters.
 4. Confirm `.env` is not tracked:
    ```bash
    git status --short

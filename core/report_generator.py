@@ -1,6 +1,9 @@
 # core/report_generator.py
 import os
+import sys
 import logging
+import tempfile
+from pathlib import Path
 from typing import Union
 
 import markdown
@@ -9,6 +12,23 @@ from pydantic import BaseModel
 from config import get_settings
 
 logger = logging.getLogger(__name__)
+
+if sys.platform == "darwin":
+    homebrew_lib = Path("/opt/homebrew/lib")
+    if homebrew_lib.exists():
+        existing_path = os.environ.get("DYLD_FALLBACK_LIBRARY_PATH")
+        if existing_path:
+            paths = existing_path.split(os.pathsep)
+            if str(homebrew_lib) not in paths:
+                os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = os.pathsep.join(
+                    [str(homebrew_lib), *paths]
+                )
+        else:
+            os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = str(homebrew_lib)
+
+    font_cache_dir = Path(tempfile.gettempdir()) / "air-font-cache"
+    font_cache_dir.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("XDG_CACHE_HOME", str(font_cache_dir))
 
 try:
     from weasyprint import HTML

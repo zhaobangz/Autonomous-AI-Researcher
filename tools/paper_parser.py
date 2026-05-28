@@ -61,26 +61,47 @@ def _stream_arxiv_pdf(url: str) -> bytes:
         return bytes(buf)
 
 
-def parse_pdf(url_or_path: str) -> ParsedPaper:
+def _validate_local_pdf_path(path_value: str) -> Path:
+    path = Path(path_value).expanduser().resolve()
+    if not path.is_file():
+        raise ValueError(f"Local PDF path does not exist: {path}")
+    if path.suffix.lower() != ".pdf":
+        raise ValueError("Local file parsing is restricted to .pdf files")
+    if path.stat().st_size > MAX_PDF_BYTES:
+        raise ValueError("PDF exceeds 50MB size limit")
+    return path
+
+
+def parse_pdf(url_or_path: str, *, allow_local_file: bool = False) -> ParsedPaper:
     try:
-        if url_or_path.startswith("http"):
+        parsed = urlparse(url_or_path)
+        if parsed.scheme in {"http", "https"}:
             f = io.BytesIO(_stream_arxiv_pdf(url_or_path))
         else:
-            f = open(Path(url_or_path).resolve(), "rb")
+            if not allow_local_file:
+                raise ValueError("Local PDF paths are disabled for agent tool calls")
+            local_path = _validate_local_pdf_path(url_or_path)
+            f = local_path.open("rb")
+            if f.read(5) != b"%PDF-":
+                raise ValueError("Local file is not a PDF")
+            f.seek(0)
 
-        reader = PdfReader(f)
-        text = ""
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + "\n"
+        try:
+            reader = PdfReader(f)
+            text = ""
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
 
-        if not text.strip():
-            if _pdfminer_extract is None:
-                logger.warning("pdfminer not installed, skipping fallback extraction")
-            else:
-                f.seek(0)
-                text = _pdfminer_extract(f)
+            if not text.strip():
+                if _pdfminer_extract is None:
+                    logger.warning("pdfminer not installed, skipping fallback extraction")
+                else:
+                    f.seek(0)
+                    text = _pdfminer_extract(f)
+        finally:
+            f.close()
 
         return ParsedPaper(
             text=text,

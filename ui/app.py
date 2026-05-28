@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import html
+import inspect
 import json
 import os
 
@@ -25,6 +26,20 @@ DEFAULT_QUESTION = (
     "Analyze one practical way autonomous AI agents could make literature "
     "reviews more reliable for independent researchers."
 )
+
+
+def _api_headers(settings) -> dict[str, str]:
+    api_key = getattr(settings, "internal_api_key", None)
+    return {"X-API-Key": api_key} if api_key else {}
+
+
+def _websocket_connect(uri: str, headers: dict[str, str]):
+    if not headers:
+        return websockets.connect(uri)
+
+    params = inspect.signature(websockets.connect).parameters
+    header_arg = "additional_headers" if "additional_headers" in params else "extra_headers"
+    return websockets.connect(uri, **{header_arg: headers})
 
 STYLE_BLOCK = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -692,6 +707,7 @@ def _cancel_run(settings) -> None:
     try:
         response = httpx.delete(
             f"{settings.api_base_url}/api/research/{run_id}",
+            headers=_api_headers(settings),
             timeout=15,
         )
         if response.status_code == 404:
@@ -711,7 +727,7 @@ async def _stream_research_events(settings, run_id: str, feed_container, token_c
     ws_url = settings.api_base_url.replace("http", "ws", 1)
     uri = f"{ws_url}/api/research/{run_id}/stream"
     try:
-        async with websockets.connect(uri) as ws:
+        async with _websocket_connect(uri, _api_headers(settings)) as ws:
             while True:
                 msg = await ws.recv()
                 data = json.loads(msg)
@@ -752,6 +768,7 @@ def _start_research(settings, question: str) -> None:
         response = httpx.post(
             f"{settings.api_base_url}/api/research",
             json={"question": question},
+            headers=_api_headers(settings),
             timeout=30,
         )
         response.raise_for_status()

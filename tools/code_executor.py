@@ -1,9 +1,16 @@
-import tempfile, time, shutil, docker
+import shutil
+import tempfile
+import time
 from pathlib import Path
 from typing import Optional, Dict, Any
 
+import docker
+from docker.types import Ulimit
+
 EXECUTOR_IMAGE = "autonomous-ai-researcher-executor:latest"
 REPO_ROOT = Path(__file__).resolve().parents[1]
+MAX_CODE_BYTES = 200_000
+MAX_EXECUTION_TIMEOUT_SECONDS = 120
 
 class PythonExecutor:
     def __init__(self):
@@ -30,10 +37,22 @@ class PythonExecutor:
         tmpdir = tempfile.mkdtemp()
         start_time = time.time()
         try:
+            code_bytes = code.encode("utf-8")
+            if len(code_bytes) > MAX_CODE_BYTES:
+                return {
+                    "stdout": "",
+                    "stderr": f"Code exceeds {MAX_CODE_BYTES} byte limit.",
+                    "exit_code": -1,
+                    "runtime": time.time() - start_time,
+                    "artifacts": [],
+                }
+
+            timeout = max(1, min(int(timeout), MAX_EXECUTION_TIMEOUT_SECONDS))
             script_path = Path(tmpdir) / "experiment.py"
-            script_path.write_text(code)
+            script_path.write_bytes(code_bytes)
             output_dir = Path(tmpdir) / "output"
             output_dir.mkdir()
+            output_dir.chmod(0o777)
             container = self.client.containers.run(
                 image=EXECUTOR_IMAGE,
                 command=["python", "/code/experiment.py"],
@@ -45,6 +64,16 @@ class PythonExecutor:
                 mem_limit="512m",
                 cpu_period=100000, cpu_quota=50000,
                 network_mode="none",
+                user="1000:1000",
+                read_only=True,
+                tmpfs={
+                    "/tmp": "rw,nosuid,noexec,size=64m",
+                    "/home/sandbox": "rw,nosuid,noexec,size=16m",
+                },
+                cap_drop=["ALL"],
+                security_opt=["no-new-privileges"],
+                pids_limit=128,
+                ulimits=[Ulimit(name="nofile", soft=256, hard=256)],
                 remove=False, stdout=True, stderr=True, detach=True
             )
             try:

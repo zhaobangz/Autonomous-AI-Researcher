@@ -17,7 +17,7 @@ That means the public page can be hosted on GitHub Pages, but the prompt form ne
 
 To enable live responses:
 
-1. Deploy a small backend endpoint elsewhere.
+1. Deploy a small backend endpoint elsewhere. This repo includes the deployed Vercel backend project in `vercel-chat-api/`.
 2. Ensure it accepts `POST` requests with this JSON body:
 
 ```json
@@ -38,11 +38,33 @@ To enable live responses:
 
 ```js
 window.AIR_SITE_CONFIG = {
-    chatEndpoint: "https://your-api.example.com/api/chat",
+    chatEndpoint: "https://autonomous-ai-researcher-chat-api.vercel.app/api/chat",
 };
 ```
 
 Never put `OPENAI_API_KEY` in `index.html`, `assets/js/config.js`, or any other browser file.
+
+## Live Chat Backend
+
+The lightweight Vercel backend is deployed at:
+
+```text
+https://autonomous-ai-researcher-chat-api.vercel.app/api/chat
+```
+
+Required Vercel production environment variables:
+
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL=gpt-4o-mini`
+- `SITE_ACCESS_TOKEN`
+- `SITE_RATE_LIMIT_PER_MINUTE`
+- `PUBLIC_SITE_ORIGIN=https://research.autonomous-ai.io,https://zhaobangz.github.io,https://zhaobangz.github.io/Autonomous-AI-Researcher`
+
+Verify the deployed backend from this machine:
+
+```bash
+npm run test:live-chat
+```
 
 ## GitHub Pages Setup
 

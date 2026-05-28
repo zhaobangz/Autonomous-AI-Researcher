@@ -1,0 +1,39 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+
+# VCS and editor state
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Node/static build artifacts
+node_modules/
+npm-debug.log*
+_site/
+.vercel/
+
+# Runtime data and generated reports
+runs/
+reports/
+*.sqlite3
+pytest_output.txt

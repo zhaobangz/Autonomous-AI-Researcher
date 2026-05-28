@@ -1,0 +1,12 @@
+{
+  "name": "autonomous-ai-researcher-chat-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lightweight Vercel chat endpoint for the Autonomous AI Researcher GitHub Pages frontend.",
+  "scripts": {
+    "check": "node --check api/chat.js"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

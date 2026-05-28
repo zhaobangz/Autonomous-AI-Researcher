@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Literal, Optional
+from urllib.parse import urlparse
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -28,6 +29,15 @@ _KNOWN_MODELS = {
     "claude-opus-4-6",
     "claude-sonnet-4-6",
     "claude-haiku-4-5-20251001",
+}
+
+_WEAK_SECRET_VALUES = {
+    "change_me",
+    "changeme",
+    "change-me",
+    "password",
+    "secret",
+    "your_internal_api_key_here",
 }
 
 
@@ -152,7 +162,38 @@ class Settings(BaseSettings):
     @field_validator("llm_provider")
     @classmethod
     def _normalize_provider(cls, v: str) -> str:
-        return v.lower().strip()
+        provider = v.lower().strip()
+        if provider not in {"openai", "anthropic"}:
+            raise ValueError("Unknown provider: LLM_PROVIDER must be either 'openai' or 'anthropic'")
+        return provider
+
+    @field_validator("internal_api_key")
+    @classmethod
+    def _validate_internal_api_key(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        value = v.strip()
+        if not value:
+            return None
+        if value.lower() in _WEAK_SECRET_VALUES or value.startswith("your_"):
+            raise ValueError("INTERNAL_API_KEY must not use a placeholder value")
+        if len(value) < 16:
+            raise ValueError("INTERNAL_API_KEY must be at least 16 characters")
+        return value
+
+    @field_validator("allowed_origins")
+    @classmethod
+    def _validate_allowed_origins(cls, v: str) -> str:
+        origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+        for origin in origins:
+            if origin == "*" or "*" in origin:
+                raise ValueError("ALLOWED_ORIGINS must list explicit origins, not wildcards")
+            parsed = urlparse(origin)
+            if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+                raise ValueError(f"Invalid CORS origin: {origin!r}")
+            if parsed.path not in {"", "/"} or parsed.params or parsed.query or parsed.fragment:
+                raise ValueError(f"CORS origins must not include paths or query strings: {origin!r}")
+        return ",".join(origins)
 
     # ── Helpers ───────────────────────────────────────────────────────────
     @property

@@ -19,7 +19,15 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+    WebSocketException,
+    status,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
@@ -97,6 +105,18 @@ async def _verify_api_key(request: Request):
         provided = request.headers.get("X-API-Key", "")
         if not hmac.compare_digest(provided, expected_key):
             raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+def _verify_websocket_api_key(websocket: WebSocket) -> None:
+    """Apply the same API-key gate to WebSocket streams as REST routes."""
+    expected_key = get_settings().internal_api_key
+    if expected_key:
+        provided = websocket.headers.get("X-API-Key", "")
+        if not hmac.compare_digest(provided, expected_key):
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Unauthorized",
+            )
 
 
 def _validate_run_id(run_id: str) -> str:
@@ -221,6 +241,7 @@ async def cancel_research(run_id: str, request: Request):
 @app.websocket("/api/research/{run_id}/stream")
 async def stream_research(websocket: WebSocket, run_id: str):
     _validate_run_id(run_id)
+    _verify_websocket_api_key(websocket)
     await websocket.accept()
 
     pubsub = await run_manager.subscribe_events(run_id)

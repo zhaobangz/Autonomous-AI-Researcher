@@ -458,6 +458,7 @@ h3 {
 }
 
 .how-section,
+.demo-section,
 .tool-section {
     padding: clamp(2.6rem, 7vw, 5rem) 0 0;
 }
@@ -516,6 +517,122 @@ h3 {
     margin: 0;
     color: var(--muted);
     font-size: 0.95rem;
+}
+
+.demo-frame {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 320px;
+    border: 1px solid rgba(234, 223, 206, 0.94);
+    border-radius: var(--radius-lg);
+    background:
+        linear-gradient(rgba(36, 48, 71, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(36, 48, 71, 0.055) 1px, transparent 1px),
+        radial-gradient(circle at 18% 22%, rgba(15, 159, 143, 0.18), transparent 13rem),
+        radial-gradient(circle at 84% 76%, rgba(109, 93, 252, 0.18), transparent 15rem),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 240, 215, 0.8));
+    background-size: 36px 36px, 36px 36px, auto, auto, auto;
+    box-shadow: var(--shadow);
+}
+
+.demo-placeholder,
+.demo-video,
+.demo-embed {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.demo-placeholder {
+    display: grid;
+    place-items: center;
+    padding: clamp(1rem, 4vw, 2rem);
+}
+
+.demo-video,
+.demo-embed {
+    border: 0;
+    background: #111827;
+    object-fit: cover;
+}
+
+.demo-video[hidden],
+.demo-placeholder[hidden] {
+    display: none;
+}
+
+.demo-play {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: clamp(68px, 10vw, 104px);
+    height: clamp(68px, 10vw, 104px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--teal));
+    box-shadow: 0 22px 54px rgba(109, 93, 252, 0.32);
+}
+
+.demo-play::before {
+    width: 0;
+    height: 0;
+    margin-left: 0.32rem;
+    border-block: 15px solid transparent;
+    border-left: 23px solid #fff;
+    content: "";
+}
+
+.demo-preview-copy {
+    position: absolute;
+    left: clamp(1rem, 3vw, 2rem);
+    bottom: clamp(1rem, 3vw, 2rem);
+    z-index: 2;
+    display: grid;
+    gap: 0.24rem;
+    max-width: min(480px, calc(100% - 2rem));
+}
+
+.demo-preview-title {
+    color: var(--ink);
+    font-family: var(--display-font);
+    font-size: clamp(1.5rem, 3vw, 2.7rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.demo-preview-meta {
+    color: var(--primary-dark);
+    font-size: 0.88rem;
+    font-weight: 1000;
+    text-transform: uppercase;
+}
+
+.demo-preview-grid {
+    position: absolute;
+    inset: clamp(1rem, 3vw, 2rem) clamp(1rem, 3vw, 2rem) auto auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(70px, 1fr));
+    gap: 0.75rem;
+    width: min(280px, 38%);
+}
+
+.demo-preview-grid span {
+    min-height: 82px;
+    border: 1px solid rgba(36, 48, 71, 0.11);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: var(--shadow-soft);
+}
+
+.demo-preview-grid span:nth-child(2) {
+    transform: translateY(1.2rem);
+}
+
+.demo-preview-grid span:nth-child(3) {
+    transform: translateY(-0.55rem);
 }
 
 .app-grid {
@@ -897,6 +1014,21 @@ pre {
         background-size: 34px 34px, 34px 34px, auto, auto;
     }
 
+    .demo-frame {
+        background:
+            linear-gradient(rgba(249, 245, 236, 0.055) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(249, 245, 236, 0.055) 1px, transparent 1px),
+            radial-gradient(circle at 18% 22%, rgba(15, 159, 143, 0.2), transparent 13rem),
+            radial-gradient(circle at 84% 76%, rgba(109, 93, 252, 0.22), transparent 15rem),
+            linear-gradient(135deg, rgba(37, 33, 54, 0.94), rgba(48, 42, 66, 0.82));
+        background-size: 36px 36px, 36px 36px, auto, auto, auto;
+    }
+
+    .demo-preview-grid span {
+        background: rgba(37, 33, 54, 0.76);
+        border-color: rgba(249, 245, 236, 0.11);
+    }
+
     pre {
         background:
             linear-gradient(to top, rgba(37, 33, 54, 0.96), rgba(37, 33, 54, 0)) bottom / 100% 34px local,
@@ -917,6 +1049,18 @@ pre {
 
     .how-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .demo-frame {
+        min-height: 260px;
+    }
+
+    .demo-preview-grid {
+        width: min(220px, 36%);
+    }
+
+    .demo-preview-grid span {
+        min-height: 64px;
     }
 
     .node-input {
@@ -988,6 +1132,27 @@ pre {
 
     .signal-map {
         min-height: 410px;
+    }
+
+    .demo-frame {
+        min-height: 360px;
+        aspect-ratio: 4 / 5;
+    }
+
+    .demo-preview-grid {
+        inset: 1rem 1rem auto auto;
+        width: min(190px, 44%);
+        gap: 0.55rem;
+    }
+
+    .demo-preview-grid span {
+        min-height: 58px;
+        border-radius: 14px;
+    }
+
+    .demo-preview-copy {
+        left: 1rem;
+        bottom: 1rem;
     }
 
     .signal-node {

@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 from core.llm_client import LLMClient
-from core.tool_registry import ToolRegistry
+from core.tool_registry import ToolRegistry    
 
 class ToolCallOrResult(BaseModel):
     done: bool

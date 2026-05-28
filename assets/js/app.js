@@ -9,13 +9,59 @@
     const counter = document.querySelector("#prompt-count");
     const copyButton = document.querySelector("#copy-button");
     const charBarFill = document.querySelector(".char-bar-fill");
+    const demoFrame = document.querySelector("#demo-frame");
+    const demoPlaceholder = document.querySelector("#demo-placeholder");
+    const demoVideo = document.querySelector("#demo-video");
 
     const TOKEN_STORAGE_KEY = "air_site_access_token";
     const siteConfig = window.AIR_SITE_CONFIG || {};
     const chatEndpoint = typeof siteConfig.chatEndpoint === "string"
         ? siteConfig.chatEndpoint.trim()
         : "";
+    const demoVideoSrc = typeof siteConfig.demoVideoSrc === "string"
+        ? siteConfig.demoVideoSrc.trim()
+        : "";
+    const demoPosterSrc = typeof siteConfig.demoPosterSrc === "string"
+        ? siteConfig.demoPosterSrc.trim()
+        : "";
+    const demoEmbedUrl = typeof siteConfig.demoEmbedUrl === "string"
+        ? siteConfig.demoEmbedUrl.trim()
+        : "";
     let copyResetId;
+
+    function configureDemoVideo() {
+        if (!demoFrame) {
+            return;
+        }
+
+        if (demoEmbedUrl) {
+            const iframe = document.createElement("iframe");
+            iframe.className = "demo-embed";
+            iframe.src = demoEmbedUrl;
+            iframe.title = "Autonomous AI Researcher demo video";
+            iframe.loading = "lazy";
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+            iframe.allowFullscreen = true;
+            demoFrame.appendChild(iframe);
+            demoFrame.dataset.state = "video";
+            if (demoPlaceholder) {
+                demoPlaceholder.hidden = true;
+            }
+            return;
+        }
+
+        if (demoVideo && demoVideoSrc) {
+            demoVideo.src = demoVideoSrc;
+            if (demoPosterSrc) {
+                demoVideo.poster = demoPosterSrc;
+            }
+            demoVideo.hidden = false;
+            demoFrame.dataset.state = "video";
+            if (demoPlaceholder) {
+                demoPlaceholder.hidden = true;
+            }
+        }
+    }
 
     function setStatus(label, isError) {
         statusPill.textContent = label;
@@ -47,7 +93,15 @@
 
     function savedAccessToken() {
         try {
-            return window.localStorage.getItem(TOKEN_STORAGE_KEY) || "";
+            const sessionValue = window.sessionStorage.getItem(TOKEN_STORAGE_KEY) || "";
+            const legacyValue = window.localStorage.getItem(TOKEN_STORAGE_KEY) || "";
+            if (legacyValue) {
+                if (!sessionValue) {
+                    window.sessionStorage.setItem(TOKEN_STORAGE_KEY, legacyValue);
+                }
+                window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+            }
+            return sessionValue || legacyValue;
         } catch (_error) {
             return "";
         }
@@ -56,10 +110,11 @@
     function saveAccessToken(value) {
         try {
             if (value) {
-                window.localStorage.setItem(TOKEN_STORAGE_KEY, value);
+                window.sessionStorage.setItem(TOKEN_STORAGE_KEY, value);
             } else {
-                window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+                window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
             }
+            window.localStorage.removeItem(TOKEN_STORAGE_KEY);
         } catch (_error) {
             // Ignore private browsing or restricted storage failures.
         }
@@ -99,6 +154,7 @@
         }
     }
 
+    configureDemoVideo();
     tokenInput.value = savedAccessToken();
     updateCounter();
 

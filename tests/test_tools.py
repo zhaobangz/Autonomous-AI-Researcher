@@ -97,7 +97,7 @@ class TestPaperParser:
         assert "Error" in result.text or "Blocked" in result.text
 
     def test_parses_local_file(self, tmp_path):
-        """Local file parsing returns a ParsedPaper with non-empty text."""
+        """Trusted callers can opt in to local PDF parsing."""
         fpdf = pytest.importorskip("fpdf")
         FPDF = fpdf.FPDF
 
@@ -109,8 +109,18 @@ class TestPaperParser:
         pdf.output(str(pdf_path))
 
         from tools.paper_parser import parse_pdf
-        result = parse_pdf(str(pdf_path))
+        result = parse_pdf(str(pdf_path), allow_local_file=True)
         assert "Hello" in result.text or result.text == ""  # pypdf may vary
+
+    def test_local_file_blocked_by_default(self, tmp_path):
+        """The LLM-callable default must not expose arbitrary local reads."""
+        pdf_path = tmp_path / "test.pdf"
+        pdf_path.write_bytes(b"%PDF-1.4\n")
+
+        from tools.paper_parser import parse_pdf
+        result = parse_pdf(str(pdf_path))
+        assert "error" in result.metadata
+        assert "Local PDF paths are disabled" in result.metadata["error"]
 
 
 # ── code_executor ─────────────────────────────────────────────────────────
@@ -139,6 +149,27 @@ class TestCodeExecutor:
         result = exe.execute("print('hello')", timeout=30)
         assert result["exit_code"] == 0
         assert "hello" in result["stdout"]
+        run_kwargs = mock_client.containers.run.call_args.kwargs
+        assert run_kwargs["network_mode"] == "none"
+        assert run_kwargs["user"] == "1000:1000"
+        assert run_kwargs["read_only"] is True
+        assert run_kwargs["cap_drop"] == ["ALL"]
+        assert run_kwargs["security_opt"] == ["no-new-privileges"]
+        assert run_kwargs["pids_limit"] == 128
+
+    def test_rejects_oversized_code_before_container_start(self, mocker):
+        """Huge generated scripts should not start containers."""
+        mock_client = mocker.MagicMock()
+        mock_client.ping.return_value = True
+        mocker.patch("docker.from_env", return_value=mock_client)
+
+        from tools.code_executor import MAX_CODE_BYTES, PythonExecutor
+        exe = PythonExecutor()
+        result = exe.execute("x" * (MAX_CODE_BYTES + 1), timeout=30)
+
+        assert result["exit_code"] == -1
+        assert "byte limit" in result["stderr"]
+        mock_client.containers.run.assert_not_called()
 
 
 # ── ToolRegistry ──────────────────────────────────────────────────────────
