@@ -74,10 +74,6 @@ async function main() {
     };
     req.socket = { remoteAddress: "127.0.0.1" };
 
-    if (process.env.SITE_ACCESS_TOKEN) {
-        req.headers["x-site-access-token"] = process.env.SITE_ACCESS_TOKEN;
-    }
-
     const res = createMockResponse();
     await handler(req, res);
 

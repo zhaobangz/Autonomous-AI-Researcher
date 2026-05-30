@@ -3,34 +3,6 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 
-function loadEnv(filePath) {
-    if (!fs.existsSync(filePath)) {
-        return {};
-    }
-
-    const env = {};
-    for (const rawLine of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
-        const line = rawLine.trim();
-        if (!line || line.startsWith("#")) {
-            continue;
-        }
-        const separator = line.indexOf("=");
-        if (separator === -1) {
-            continue;
-        }
-        const key = line.slice(0, separator).trim();
-        let value = line.slice(separator + 1).trim();
-        if (
-            (value.startsWith("\"") && value.endsWith("\"")) ||
-            (value.startsWith("'") && value.endsWith("'"))
-        ) {
-            value = value.slice(1, -1);
-        }
-        env[key] = value;
-    }
-    return env;
-}
-
 function configuredEndpoint() {
     const configPath = path.join(root, "assets/js/config.js");
     const config = fs.readFileSync(configPath, "utf8");
@@ -55,18 +27,25 @@ async function main() {
         throw new Error("assets/js/config.js does not define a chatEndpoint.");
     }
 
-    const env = loadEnv(path.join(root, ".env"));
-    const accessToken = env.SITE_ACCESS_TOKEN;
-    if (!accessToken) {
-        throw new Error("SITE_ACCESS_TOKEN is missing from local .env.");
+    const origin = siteOrigin();
+    const preflight = await fetch(endpoint, {
+        method: "OPTIONS",
+        headers: {
+            "origin": origin,
+            "access-control-request-method": "POST",
+            "access-control-request-headers": "content-type",
+        },
+    });
+
+    if (preflight.status !== 204 || preflight.headers.get("access-control-allow-origin") !== origin) {
+        throw new Error(`Live chat CORS preflight failed with ${preflight.status}.`);
     }
 
     const response = await fetch(endpoint, {
         method: "POST",
         headers: {
             "content-type": "application/json",
-            "origin": siteOrigin(),
-            "x-site-access-token": accessToken,
+            "origin": origin,
         },
         body: JSON.stringify({
             prompt: "Return a concise readiness check for the public Autonomous AI Researcher demo.",
@@ -79,6 +58,7 @@ async function main() {
     }
 
     console.log(JSON.stringify({
+        preflightStatus: preflight.status,
         status: response.status,
         model: data.model,
         outputPreview: String(data.output || "").slice(0, 240),

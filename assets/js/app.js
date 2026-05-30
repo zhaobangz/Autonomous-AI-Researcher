@@ -1,7 +1,6 @@
 (function () {
     const form = document.querySelector("#prompt-form");
     const promptInput = document.querySelector("#prompt");
-    const tokenInput = document.querySelector("#access-token");
     const output = document.querySelector("#response-output");
     const statusPill = document.querySelector("#status-pill");
     const submitButton = document.querySelector("#submit-button");
@@ -13,7 +12,6 @@
     const demoPlaceholder = document.querySelector("#demo-placeholder");
     const demoVideo = document.querySelector("#demo-video");
 
-    const TOKEN_STORAGE_KEY = "air_site_access_token";
     const siteConfig = window.AIR_SITE_CONFIG || {};
     const chatEndpoint = typeof siteConfig.chatEndpoint === "string"
         ? siteConfig.chatEndpoint.trim()
@@ -91,36 +89,7 @@
         copyButton.textContent = "Copy";
     }
 
-    function savedAccessToken() {
-        try {
-            const sessionValue = window.sessionStorage.getItem(TOKEN_STORAGE_KEY) || "";
-            const legacyValue = window.localStorage.getItem(TOKEN_STORAGE_KEY) || "";
-            if (legacyValue) {
-                if (!sessionValue) {
-                    window.sessionStorage.setItem(TOKEN_STORAGE_KEY, legacyValue);
-                }
-                window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-            }
-            return sessionValue || legacyValue;
-        } catch (_error) {
-            return "";
-        }
-    }
-
-    function saveAccessToken(value) {
-        try {
-            if (value) {
-                window.sessionStorage.setItem(TOKEN_STORAGE_KEY, value);
-            } else {
-                window.sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-            }
-            window.localStorage.removeItem(TOKEN_STORAGE_KEY);
-        } catch (_error) {
-            // Ignore private browsing or restricted storage failures.
-        }
-    }
-
-    async function runPrompt(prompt, accessToken) {
+    async function runPrompt(prompt) {
         if (!chatEndpoint) {
             throw new Error("This GitHub Pages site is static. Configure assets/js/config.js with a hosted chat endpoint before accepting prompts.");
         }
@@ -128,10 +97,6 @@
         const headers = {
             "Content-Type": "application/json",
         };
-
-        if (accessToken) {
-            headers["X-Site-Access-Token"] = accessToken;
-        }
 
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 30000);
@@ -155,7 +120,6 @@
     }
 
     configureDemoVideo();
-    tokenInput.value = savedAccessToken();
     updateCounter();
 
     promptInput.addEventListener("input", updateCounter);
@@ -186,7 +150,6 @@
         event.preventDefault();
 
         const prompt = promptInput.value.trim();
-        const accessToken = tokenInput.value.trim();
 
         if (prompt.length < 10) {
             setStatus("Error", true);
@@ -194,14 +157,13 @@
             return;
         }
 
-        saveAccessToken(accessToken);
         setBusy(true);
         setStatus("Thinking...", false);
         resetCopyButton();
         output.textContent = "Generating research brief...";
 
         try {
-            const data = await runPrompt(prompt, accessToken);
+            const data = await runPrompt(prompt);
             output.textContent = data.output || "No text was returned.";
             setStatus(data.model || "Complete", false);
         } catch (error) {

@@ -1,4 +1,6 @@
 """Tests for tools/paper_parser.py — SSRF protection and streaming size/type guards."""
+import importlib
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -35,6 +37,21 @@ class TestParsePdfErrorHandling:
         result = parse_pdf("https://evil.com/foo.pdf")
         assert "error" in result.metadata
         assert "Blocked SSRF" in result.metadata["error"]
+
+    def test_missing_pypdf_does_not_break_module_import(self, monkeypatch):
+        original_module = sys.modules.pop("tools.paper_parser", None)
+        monkeypatch.setitem(sys.modules, "pypdf", None)
+
+        try:
+            module = importlib.import_module("tools.paper_parser")
+            result = module.parse_pdf("https://arxiv.org/pdf/fake.pdf")
+
+            assert "error" in result.metadata
+            assert "Missing dependency 'pypdf'" in result.metadata["error"]
+        finally:
+            sys.modules.pop("tools.paper_parser", None)
+            if original_module is not None:
+                sys.modules["tools.paper_parser"] = original_module
 
 
 class TestStreamingGuards:

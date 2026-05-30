@@ -1,11 +1,12 @@
-const crypto = require("node:crypto");
-
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const MAX_PROMPT_LENGTH = 2000;
 const MIN_PROMPT_LENGTH = 10;
 const REQUEST_TIMEOUT_MS = 25000;
 const RATE_LIMIT_WINDOW_MS = 60000;
 const RATE_LIMIT_MAX = Number.parseInt(process.env.SITE_RATE_LIMIT_PER_MINUTE || "6", 10);
+const CORS_ALLOW_METHODS = "POST, OPTIONS";
+const CORS_ALLOW_HEADERS = "Content-Type";
+const CORS_MAX_AGE_SECONDS = "86400";
 
 const buckets = globalThis.__airRateLimitBuckets || new Map();
 globalThis.__airRateLimitBuckets = buckets;
@@ -14,6 +15,41 @@ function setSecurityHeaders(res) {
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+}
+
+function addVaryHeader(res, value) {
+    const existing = typeof res.getHeader === "function" ? res.getHeader("Vary") : "";
+    const parts = String(existing || "")
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    if (!parts.some((part) => part.toLowerCase() === value.toLowerCase())) {
+        parts.push(value);
+    }
+
+    res.setHeader("Vary", parts.join(", "));
+}
+
+function normalizeOrigin(value) {
+    const raw = (Array.isArray(value) ? value[0] : value || "").trim();
+    if (!raw) {
+        return "";
+    }
+
+    try {
+        return new URL(raw).origin;
+    } catch (_error) {
+        return raw.replace(/\/+$/, "");
+    }
+}
+
+function headerValue(value) {
+    return Array.isArray(value) ? value[0] : value;
+}
+
+function requestOrigin(req) {
+    return normalizeOrigin(req.headers.origin);
 }
 
 function json(res, statusCode, payload) {
@@ -55,21 +91,15 @@ function isRateLimited(req) {
     return false;
 }
 
-function safeCompare(a, b) {
-    const normalize = (value) => Array.isArray(value) ? value[0] || "" : value || "";
-    const left = crypto.createHash("sha256").update(normalize(a), "utf8").digest();
-    const right = crypto.createHash("sha256").update(normalize(b), "utf8").digest();
-    return crypto.timingSafeEqual(left, right);
-}
-
 function configuredOrigins(req) {
     const origins = new Set([
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]);
 
-    const host = req.headers.host;
-    const proto = req.headers["x-forwarded-proto"] || (host && host.includes("localhost") ? "http" : "https");
+    const host = headerValue(req.headers.host);
+    const forwardedProto = headerValue(req.headers["x-forwarded-proto"]);
+    const proto = forwardedProto || (host && host.includes("localhost") ? "http" : "https");
     if (host) {
         origins.add(`${proto}://${host}`);
     }
@@ -79,9 +109,9 @@ function configuredOrigins(req) {
     }
 
     for (const origin of (process.env.PUBLIC_SITE_ORIGIN || "").split(",")) {
-        const trimmed = origin.trim();
-        if (trimmed) {
-            origins.add(trimmed);
+        const normalized = normalizeOrigin(origin);
+        if (normalized) {
+            origins.add(normalized);
         }
     }
 
@@ -89,11 +119,25 @@ function configuredOrigins(req) {
 }
 
 function hasAllowedOrigin(req) {
-    const origin = req.headers.origin;
+    const origin = requestOrigin(req);
     if (!origin) {
         return true;
     }
     return configuredOrigins(req).has(origin);
+}
+
+function setCorsHeaders(req, res) {
+    const origin = requestOrigin(req);
+    if (!origin || !configuredOrigins(req).has(origin)) {
+        return false;
+    }
+
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Methods", CORS_ALLOW_METHODS);
+    res.setHeader("Access-Control-Allow-Headers", CORS_ALLOW_HEADERS);
+    res.setHeader("Access-Control-Max-Age", CORS_MAX_AGE_SECONDS);
+    addVaryHeader(res, "Origin");
+    return true;
 }
 
 async function readJsonBody(req) {
@@ -168,7 +212,8 @@ async function callOpenAI(prompt) {
                 temperature: 0.2,
                 instructions: [
                     "You are the public prompt endpoint for the Autonomous AI Researcher project.",
-                    "Return a concise research brief with: Summary, Research Plan, Critical Risks, and Next Step.",
+                    "Return a concise research brief with exactly these Markdown headings, in this order: ## Summary, ## Research Plan, ## Critical Risks, ## Next Step.",
+                    "Include every heading even when the answer is brief.",
                     "Do not claim that live literature searches, paper downloads, code execution, or experiments were performed.",
                 ].join("\n"),
                 input: [
@@ -203,13 +248,22 @@ async function callOpenAI(prompt) {
 }
 
 module.exports = async function handler(req, res) {
-    if (req.method !== "POST") {
-        res.setHeader("Allow", "POST");
-        return json(res, 405, { error: "Method not allowed." });
-    }
-
     if (!hasAllowedOrigin(req)) {
         return json(res, 403, { error: "Origin not allowed." });
+    }
+
+    setCorsHeaders(req, res);
+
+    if (req.method === "OPTIONS") {
+        setSecurityHeaders(res);
+        res.statusCode = 204;
+        res.setHeader("Allow", CORS_ALLOW_METHODS);
+        return res.end();
+    }
+
+    if (req.method !== "POST") {
+        res.setHeader("Allow", CORS_ALLOW_METHODS);
+        return json(res, 405, { error: "Method not allowed." });
     }
 
     if (isRateLimited(req)) {
@@ -218,14 +272,6 @@ module.exports = async function handler(req, res) {
 
     if (!hasJsonContentType(req)) {
         return json(res, 415, { error: "Content-Type must be application/json." });
-    }
-
-    const expectedToken = process.env.SITE_ACCESS_TOKEN;
-    if (expectedToken) {
-        const providedToken = req.headers["x-site-access-token"];
-        if (!safeCompare(providedToken, expectedToken)) {
-            return json(res, 401, { error: "Access code required." });
-        }
     }
 
     let body;

@@ -3,13 +3,31 @@ Robust PDF parser with size, SSRF, and content type protection.
 """
 import io
 import logging
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List
 from urllib.parse import urlparse
 
-import httpx
-from pydantic import BaseModel
-from pypdf import PdfReader
+try:
+    import httpx
+except ImportError as exc:
+    httpx = None
+    _httpx_import_error = exc
+else:
+    _httpx_import_error = None
+
+try:
+    from pydantic import BaseModel
+except ImportError:
+    BaseModel = None
+
+try:
+    from pypdf import PdfReader
+except ImportError as exc:
+    PdfReader = None
+    _pypdf_import_error = exc
+else:
+    _pypdf_import_error = None
 
 try:
     from pdfminer.high_level import extract_text as _pdfminer_extract
@@ -23,10 +41,31 @@ DOWNLOAD_TIMEOUT = 30
 CHUNK_SIZE = 64 * 1024
 
 
-class ParsedPaper(BaseModel):
-    text: str
-    chunks: List[str]
-    metadata: Dict[str, Any]
+if BaseModel is not None:
+
+    class ParsedPaper(BaseModel):
+        text: str
+        chunks: List[str]
+        metadata: Dict[str, Any]
+
+else:
+
+    @dataclass
+    class ParsedPaper:
+        text: str
+        chunks: List[str]
+        metadata: Dict[str, Any]
+
+        def model_dump(self) -> Dict[str, Any]:
+            return asdict(self)
+
+
+def _missing_dependency_error(package: str, error: ImportError | None = None) -> RuntimeError:
+    detail = f": {error}" if error else ""
+    return RuntimeError(
+        f"Missing dependency '{package}'{detail}. "
+        "Install project dependencies with `pip install -r requirements.txt`."
+    )
 
 
 def _validate_arxiv_url(url: str) -> None:
@@ -40,6 +79,9 @@ def _validate_arxiv_url(url: str) -> None:
 
 
 def _stream_arxiv_pdf(url: str) -> bytes:
+    if httpx is None:
+        raise _missing_dependency_error("httpx", _httpx_import_error)
+
     _validate_arxiv_url(url)
     with httpx.stream(
         "GET",
@@ -74,6 +116,9 @@ def _validate_local_pdf_path(path_value: str) -> Path:
 
 def parse_pdf(url_or_path: str, *, allow_local_file: bool = False) -> ParsedPaper:
     try:
+        if PdfReader is None:
+            raise _missing_dependency_error("pypdf", _pypdf_import_error)
+
         parsed = urlparse(url_or_path)
         if parsed.scheme in {"http", "https"}:
             f = io.BytesIO(_stream_arxiv_pdf(url_or_path))

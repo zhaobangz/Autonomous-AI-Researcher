@@ -1,0 +1,30 @@
+# Root Vercel deployments serve the static frontend from _site.
+# The Python/FastAPI app and the Vercel chat backend are deployed separately.
+
+.DS_Store
+.env*
+.venv/
+__pycache__/
+*.pyc
+
+api/
+agents/
+core/
+memory/
+reports/
+runs/
+tests/
+tools/
+ui/
+autonomous_ai_researcher.egg-info/
+
+vercel-chat-api/
+
+Dockerfile
+docker-compose.yml
+executor.Dockerfile
+pyproject.toml
+requirements.txt
+pytest_output.txt
+scratch.py
+seo_audit.py

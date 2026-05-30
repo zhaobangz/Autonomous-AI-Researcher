@@ -5,6 +5,7 @@
   "description": "Static GitHub Pages interface for Autonomous AI Researcher",
   "scripts": {
     "build": "node scripts/build-pages.js",
+    "test:chat-cors": "node scripts/test-chat-cors.js",
     "smoke:chat": "node scripts/smoke-chat.js",
     "test:live-chat": "node scripts/test-live-chat.js",
     "test:site": "node scripts/validate-site.js"

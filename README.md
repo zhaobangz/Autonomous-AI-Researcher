@@ -72,7 +72,7 @@ Open the hosted site:
 https://research.autonomous-ai.io
 ```
 
-Enter a research question and click **Run prompt**. If the site asks for an access code, use the code provided by the project owner. The public prompt form calls a separately hosted HTTPS backend and does not expose `OPENAI_API_KEY` in browser code.
+Enter a research question and click **Run prompt**. The public prompt form calls a separately hosted HTTPS backend and does not expose `OPENAI_API_KEY` in browser code.
 
 For your own fork, do not rely on this repository owner's backend endpoint. Deploy your own endpoint by following [Deploy Your Own Public Demo](#deploy-your-own-public-demo).
 
@@ -157,7 +157,6 @@ cd vercel-chat-api
 npx vercel link
 npx vercel env add OPENAI_API_KEY production
 npx vercel env add OPENAI_MODEL production
-npx vercel env add SITE_ACCESS_TOKEN production
 npx vercel env add SITE_RATE_LIMIT_PER_MINUTE production
 npx vercel env add PUBLIC_SITE_ORIGIN production
 npx vercel deploy --prod
@@ -171,7 +170,7 @@ SITE_RATE_LIMIT_PER_MINUTE=6
 PUBLIC_SITE_ORIGIN=https://your-github-pages-domain.example
 ```
 
-Use a private random value for `SITE_ACCESS_TOKEN` so random visitors cannot spend your OpenAI credits.
+Set a conservative `SITE_RATE_LIMIT_PER_MINUTE` because public visitors can submit prompts that consume your OpenAI credits.
 
 ### 2. Connect the frontend
 
@@ -191,7 +190,7 @@ npm run build
 python3 -m http.server 3000 --directory _site
 ```
 
-Open **http://localhost:3000**, enter your `SITE_ACCESS_TOKEN`, and submit a prompt.
+Open **http://localhost:3000** and submit a prompt.
 
 ### 3. Publish with GitHub Pages
 
@@ -214,7 +213,6 @@ Push your changes to `main`. The included GitHub Pages workflow builds `_site/` 
 | `RUNS_DIR` | `./runs` | Where run artefacts are stored |
 | `INTERNAL_API_KEY` | — | Require a non-placeholder `X-API-Key` of at least 16 chars on REST and WebSocket API routes |
 | `OPENAI_MODEL` | `gpt-4o-mini` | Model for the lightweight public Vercel chat endpoint |
-| `SITE_ACCESS_TOKEN` | — | Optional access code for the public prompt endpoint |
 | `PUBLIC_SITE_ORIGIN` | — | Comma-separated frontend origins allowed to call the public prompt endpoint |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Max run starts per IP per minute |
 | `LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
@@ -245,7 +243,7 @@ python -m pytest -q
 # Validate the static website
 npm run test:site
 
-# Test the configured live Vercel chat endpoint, if .env contains SITE_ACCESS_TOKEN
+# Test the configured live Vercel chat endpoint
 npm run test:live-chat
 
 # Run the API with live reload
@@ -309,7 +307,8 @@ For hosted video platforms, set `demoEmbedUrl` in `assets/js/config.js` instead.
 - **Docker daemon unavailable** — If you see `docker: Cannot connect to the Docker daemon`, start Docker Desktop and retry the run.
 - **WeasyPrint errors on macOS** — Install the required system libraries with `brew install pango cairo`.
 - **OpenAI 401 errors** — Check your `.env` file, confirm `OPENAI_API_KEY` is valid, and ensure there is no extra whitespace.
-- **Public prompt returns "Access code required"** — Enter the `SITE_ACCESS_TOKEN` configured in your Vercel project.
-- **Public prompt returns "Origin not allowed"** — Add your GitHub Pages/custom domain to `PUBLIC_SITE_ORIGIN` in Vercel and redeploy.
+- **Public prompt fails before submitting** — Confirm the Vercel endpoint responds to `OPTIONS` preflight and includes `Access-Control-Allow-Origin` for your Pages/custom domain.
+- **Public prompt returns "Origin not allowed"** — Add your GitHub Pages/custom domain origin to `PUBLIC_SITE_ORIGIN` in Vercel and redeploy. Use origins only, for example `https://zhaobangz.github.io`, with no path.
+- **Custom domain does not resolve** — Keep `CNAME` in the repo, then add a DNS `CNAME` record at your domain provider from `research` to `zhaobangz.github.io`.
 - **Redis connection refused** — `RunManager` falls back to in-memory tracking automatically. For persistent run state, start Redis with `docker run -p 6379:6379 redis`.
 - **Python version mismatch** — Use Python 3.11 via pyenv: `pyenv install 3.11 && pyenv local 3.11`.

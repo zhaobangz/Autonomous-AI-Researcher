@@ -74,3 +74,5 @@ Desktop.ini
 # Local test 
   output
 pytest_output.txt
+.vercel
+.env*
