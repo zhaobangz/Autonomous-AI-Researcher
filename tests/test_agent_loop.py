@@ -14,7 +14,7 @@ def mock_llm(mocker):
     mocker.patch("core.llm_client.LLMClient.chat_completion", new=mock_chat_completion)
 
 def test_run_agent(mock_llm, mocker, monkeypatch):
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-fake")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
     monkeypatch.setenv("RUNS_DIR", "./runs")
     mocker.patch("tools.arxiv_search.search_arxiv", return_value=[])
     mocker.patch("tools.web_search.web_search", return_value=[{"title": "Test", "content": "Text", "url": "http://test"}])

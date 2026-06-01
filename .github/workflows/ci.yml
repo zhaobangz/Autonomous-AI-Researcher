@@ -14,7 +14,7 @@ jobs:
 
     env:
       LLM_PROVIDER: openai
-      OPENAI_API_KEY: sk-test-placeholder
+      OPENAI_API_KEY: test-openai-key
 
     steps:
       - name: Check out repository

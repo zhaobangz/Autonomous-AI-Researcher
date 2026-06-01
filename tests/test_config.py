@@ -48,7 +48,7 @@ class TestValidateLlmReady:
             s.validate_llm_ready()
 
     def test_real_key_passes(self):
-        s = Settings(llm_provider="openai", openai_api_key="sk-real")
+        s = Settings(llm_provider="openai", openai_api_key="test-openai-key")
         s.validate_llm_ready()  # no raise
 
 

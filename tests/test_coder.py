@@ -68,7 +68,7 @@ class TestCleanCode:
 class TestCoderRunAsync:
     def test_prepends_imports_if_missing(self, mocker, monkeypatch):
         """Coder prepends 'import sys, json, time' if the LLM omits it."""
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-fake")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
         monkeypatch.setenv("LLM_PROVIDER", "openai")
 
         mocker.patch(

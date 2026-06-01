@@ -71,8 +71,6 @@ Desktop.ini
 # Claude Code per-developer settings
 .claude/settings.local.json
 
-# Local test 
-  output
+# Local test output
+output/
 pytest_output.txt
-.vercel
-.env*

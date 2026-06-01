@@ -57,9 +57,9 @@ class TestApiKey:
 
     def test_anthropic_uses_anthropic_env(self, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "anthropic")
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-real")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
         client = LLMClient()
-        assert client._get_api_key() == "sk-ant-real"
+        assert client._get_api_key() == "test-anthropic-key"
 
 
 # ── Cost accounting ─────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ class TestChatCompletion:
     def test_openai_success_path(self, mocker, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openai")
         monkeypatch.setenv("LLM_MODEL", "gpt-4o")
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
 
         fake_response = mocker.MagicMock()
         fake_response.choices[0].message.content = "hello world"
@@ -120,7 +120,7 @@ class TestChatCompletion:
     def test_anthropic_success_path(self, mocker, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "anthropic")
         monkeypatch.setenv("LLM_MODEL", "claude-sonnet-4-6")
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-real")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
 
         fake_response = mocker.MagicMock()
         fake_response.content = [mocker.MagicMock(text="claude says hi")]
@@ -156,7 +156,7 @@ class _Greeting(BaseModel):
 class TestStructuredOutput:
     def test_parses_raw_json(self, mocker, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openai")
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
         mocker.patch.object(
             LLMClient,
             "chat_completion",
@@ -171,7 +171,7 @@ class TestStructuredOutput:
 
     def test_strips_markdown_fences(self, mocker, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openai")
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
         fenced = '```json\n{"greeting": "hello", "target": "you"}\n```'
         mocker.patch.object(LLMClient, "chat_completion", return_value=fenced)
         client = LLMClient()
@@ -182,7 +182,7 @@ class TestStructuredOutput:
 
     def test_retries_once_on_invalid_json(self, mocker, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openai")
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
         responses = iter(
             [
                 "not even close to json",
@@ -200,7 +200,7 @@ class TestStructuredOutput:
 
     def test_raises_after_two_failed_attempts(self, mocker, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openai")
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-openai-key")
         mocker.patch.object(
             LLMClient, "chat_completion", return_value="never valid json"
         )

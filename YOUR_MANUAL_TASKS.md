@@ -11,12 +11,12 @@ I fixed the code and configuration issues that can be handled without your priva
 2. Open `.env` and add at least one real LLM key:
    ```env
    LLM_PROVIDER=openai
-   OPENAI_API_KEY=sk-...your-real-key...
+   OPENAI_API_KEY=<your real OpenAI API key>
    ```
    Or use Anthropic instead:
    ```env
    LLM_PROVIDER=anthropic
-   ANTHROPIC_API_KEY=sk-ant-...your-real-key...
+   ANTHROPIC_API_KEY=<your real Anthropic API key>
    ```
 3. Optional keys:
    - `TAVILY_API_KEY` — better web search quality; otherwise DuckDuckGo fallback is used.
