@@ -1,4 +1,5 @@
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_PROMPT_LENGTH = 2000;
 const MIN_PROMPT_LENGTH = 10;
 const REQUEST_TIMEOUT_MS = 25000;
@@ -174,6 +175,23 @@ function extractText(data) {
         return data.output_text.trim();
     }
 
+    const choice = data.choices?.[0]?.message?.content;
+    if (typeof choice === "string" && choice.trim()) {
+        return choice.trim();
+    }
+
+    if (Array.isArray(choice)) {
+        return choice
+            .map((part) => {
+                if (typeof part === "string") {
+                    return part;
+                }
+                return part?.text || "";
+            })
+            .join("")
+            .trim();
+    }
+
     const parts = [];
     for (const item of data.output || []) {
         for (const content of item.content || []) {
@@ -185,61 +203,156 @@ function extractText(data) {
     return parts.join("\n").trim();
 }
 
-async function callOpenAI(prompt) {
-    const apiKey = process.env.OPENAI_API_KEY;
+function llmProvider() {
+    const configured = (process.env.LLM_PROVIDER || "").toLowerCase().trim();
+    if (configured) {
+        return configured;
+    }
+    return "openrouter";
+}
+
+function llmConfig(provider) {
+    if (provider === "openrouter") {
+        return {
+            apiKey: process.env.OPENROUTER_API_KEY,
+            keyName: "OPENROUTER_API_KEY",
+            model: process.env.OPENROUTER_MODEL || process.env.LLM_MODEL || "openai/gpt-4o-mini",
+        };
+    }
+
+    if (provider === "openai") {
+        return {
+            apiKey: process.env.OPENAI_API_KEY,
+            keyName: "OPENAI_API_KEY",
+            model: process.env.OPENAI_MODEL || process.env.LLM_MODEL || "gpt-4o-mini",
+        };
+    }
+
+    const error = new Error("Unsupported LLM provider.");
+    error.statusCode = 500;
+    throw error;
+}
+
+function openRouterHeaders() {
+    const headers = {};
+    if (process.env.OPENROUTER_SITE_URL) {
+        headers["HTTP-Referer"] = process.env.OPENROUTER_SITE_URL;
+    }
+    if (process.env.OPENROUTER_APP_NAME) {
+        headers["X-OpenRouter-Title"] = process.env.OPENROUTER_APP_NAME;
+    }
+    return headers;
+}
+
+function promptInstructions() {
+    return [
+        "You are the public prompt endpoint for the Autonomous AI Researcher project.",
+        "Return a concise research brief with exactly these Markdown headings, in this order: ## Summary, ## Research Plan, ## Critical Risks, ## Next Step.",
+        "Include every heading even when the answer is brief.",
+        "Do not claim that live literature searches, paper downloads, code execution, or experiments were performed.",
+    ].join("\n");
+}
+
+async function callOpenAI(prompt, config, controller) {
+    const response = await fetch(OPENAI_RESPONSES_URL, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${config.apiKey}`,
+            "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+            model: config.model,
+            store: false,
+            max_output_tokens: 700,
+            temperature: 0.2,
+            instructions: promptInstructions(),
+            input: [
+                {
+                    role: "user",
+                    content: [
+                        {
+                            type: "input_text",
+                            text: prompt,
+                        },
+                    ],
+                },
+            ],
+        }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        const error = new Error(data.error?.message || "OpenAI request failed.");
+        error.statusCode = response.status;
+        throw error;
+    }
+
+    return data;
+}
+
+async function callOpenRouter(prompt, config, controller) {
+    const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${config.apiKey}`,
+            "Content-Type": "application/json",
+            ...openRouterHeaders(),
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+            model: config.model,
+            max_tokens: 700,
+            temperature: 0.2,
+            messages: [
+                {
+                    role: "system",
+                    content: promptInstructions(),
+                },
+                {
+                    role: "user",
+                    content: prompt,
+                },
+            ],
+        }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        const error = new Error(data.error?.message || "OpenRouter request failed.");
+        error.statusCode = response.status;
+        throw error;
+    }
+
+    return data;
+}
+
+async function callLLM(prompt) {
+    const provider = llmProvider();
+    const config = llmConfig(provider);
+    const apiKey = config.apiKey;
     if (!apiKey) {
-        const error = new Error("OPENAI_API_KEY is not configured.");
+        const error = new Error(`${config.keyName} is not configured.`);
+        error.statusCode = 500;
+        throw error;
+    }
+    if (provider === "openai" && apiKey.startsWith("sk-or-")) {
+        const error = new Error("OPENAI_API_KEY looks like an OpenRouter key. Set LLM_PROVIDER=openrouter and use OPENROUTER_API_KEY.");
         error.statusCode = 500;
         throw error;
     }
 
-    const model = process.env.OPENAI_MODEL || process.env.LLM_MODEL || "gpt-4o-mini";
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-        const response = await fetch(OPENAI_RESPONSES_URL, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            signal: controller.signal,
-            body: JSON.stringify({
-                model,
-                store: false,
-                max_output_tokens: 700,
-                temperature: 0.2,
-                instructions: [
-                    "You are the public prompt endpoint for the Autonomous AI Researcher project.",
-                    "Return a concise research brief with exactly these Markdown headings, in this order: ## Summary, ## Research Plan, ## Critical Risks, ## Next Step.",
-                    "Include every heading even when the answer is brief.",
-                    "Do not claim that live literature searches, paper downloads, code execution, or experiments were performed.",
-                ].join("\n"),
-                input: [
-                    {
-                        role: "user",
-                        content: [
-                            {
-                                type: "input_text",
-                                text: prompt,
-                            },
-                        ],
-                    },
-                ],
-            }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            const error = new Error(data.error?.message || "OpenAI request failed.");
-            error.statusCode = response.status;
-            throw error;
-        }
+        const data = provider === "openrouter"
+            ? await callOpenRouter(prompt, config, controller)
+            : await callOpenAI(prompt, config, controller);
 
         return {
             output: extractText(data),
-            model,
+            model: data.model || config.model,
             usage: data.usage || null,
         };
     } finally {
@@ -287,11 +400,11 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const result = await callOpenAI(prompt);
+        const result = await callLLM(prompt);
         return json(res, 200, result);
     } catch (error) {
         const status = error.statusCode && error.statusCode < 500 ? 502 : 500;
-        console.error("OpenAI route error:", {
+        console.error("LLM route error:", {
             statusCode: error.statusCode || 500,
             message: error.message,
         });

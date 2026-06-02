@@ -8,12 +8,18 @@ I fixed the code and configuration issues that can be handled without your priva
    ```bash
    cp .env.example .env
    ```
-2. Open `.env` and add at least one real LLM key:
+2. Open `.env` and add your OpenRouter key:
+   ```env
+   LLM_PROVIDER=openrouter
+   LLM_MODEL=openai/gpt-4o-mini
+   OPENROUTER_API_KEY=<your real OpenRouter API key>
+   ```
+   Optional alternate providers:
    ```env
    LLM_PROVIDER=openai
    OPENAI_API_KEY=<your real OpenAI API key>
    ```
-   Or use Anthropic instead:
+   or:
    ```env
    LLM_PROVIDER=anthropic
    ANTHROPIC_API_KEY=<your real Anthropic API key>
@@ -110,7 +116,7 @@ Open http://localhost:8501.
 
 ## 7. Cost and safety tasks
 
-- Set a spending limit in your OpenAI/Anthropic dashboard before long demos.
+- Set a spending limit in your provider dashboard before long demos.
 - Keep Docker Desktop running when using the Coder sandbox.
 - Never paste real API keys into source files, README files, screenshots, or commits.
 - Review generated reports before sharing; LLM output can contain mistakes.

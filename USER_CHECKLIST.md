@@ -3,8 +3,8 @@
 Tasks Gemini cannot do for you. Work through these in order.
 
 ## A. Accounts & API Keys
-1. Create or reuse an OpenAI account, generate an API key, and add a small balance ($5 is plenty for testing). Save as `OPENAI_API_KEY`.
-2. (Optional but recommended) Create an Anthropic account and generate `ANTHROPIC_API_KEY` so you can demo provider-switching.
+1. Create or reuse an OpenRouter account and generate `OPENROUTER_API_KEY`. OpenAI or Anthropic keys are optional alternates.
+2. (Optional but recommended) Configure a second provider so you can demo provider-switching.
 3. (Optional) Create a free Tavily account for higher-quality web search and save `TAVILY_API_KEY`.
 4. (Optional) If you want to demo the Pinecone path, create an index and save `PINECONE_API_KEY` plus `PINECONE_ENVIRONMENT`.
 
@@ -38,6 +38,6 @@ Tasks Gemini cannot do for you. Work through these in order.
 25. Final review: re-read README.md and ARCHITECTURE.md side-by-side with the code to confirm nothing in the docs is unimplemented.
 
 ## F. Cost & Safety Sanity Check
-26. Set a hard spending cap on your OpenAI/Anthropic dashboards before any public demo.
+26. Set a hard spending cap on your provider dashboard before any public demo.
 27. In the UI, surface the running token counter so you (and graders) can see live cost.
 28. Decide whether to leave the executor unsandboxed for ease of demo, or require Docker for any "untrusted" research goal — document the choice in `README.md` under Limitations.

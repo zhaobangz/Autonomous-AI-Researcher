@@ -24,7 +24,7 @@ The root `.vercelignore` excludes the Python app, tests, run artifacts, and `ver
 
 ## Important API Limitation
 
-GitHub Pages cannot run server code, serverless functions, or securely store `OPENAI_API_KEY`.
+GitHub Pages cannot run server code, serverless functions, or securely store provider API keys.
 
 That means the public page can be hosted on GitHub Pages, but the prompt form needs a separately hosted HTTPS API endpoint before it can return live AI responses.
 
@@ -54,7 +54,7 @@ window.AIR_SITE_CONFIG = {
 };
 ```
 
-Never put `OPENAI_API_KEY` in `index.html`, `assets/js/config.js`, or any other browser file.
+Never put `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, or any other provider secret in `index.html`, `assets/js/config.js`, or any other browser file.
 
 ## Live Chat Backend
 
@@ -66,10 +66,13 @@ https://autonomous-ai-researcher-chat-api.vercel.app/api/chat
 
 Required Vercel production environment variables:
 
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL=gpt-4o-mini`
+- `LLM_PROVIDER=openrouter`
+- `OPENROUTER_API_KEY`
+- `OPENROUTER_MODEL=openai/gpt-4o-mini`
 - `SITE_RATE_LIMIT_PER_MINUTE`
 - `PUBLIC_SITE_ORIGIN=https://research.autonomous-ai.io,https://zhaobangz.github.io`
+
+For an OpenAI-backed backend instead, use `LLM_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL=gpt-4o-mini`.
 
 `PUBLIC_SITE_ORIGIN` must contain origins only. Do not include paths such as `/Autonomous-AI-Researcher`, because browsers send only the scheme, host, and port in the `Origin` header.
 

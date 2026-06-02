@@ -27,6 +27,8 @@ class LLMClient:
         self.pricing = {
             "gpt-4o": [0.005, 0.015],
             "gpt-4o-mini": [0.00015, 0.0006],
+            "openai/gpt-4o": [0.005, 0.015],
+            "openai/gpt-4o-mini": [0.00015, 0.0006],
             "gpt-4.1": [0.002, 0.008],
             "gpt-4.1-mini": [0.0004, 0.0016],
             "gpt-3.5-turbo": [0.0005, 0.0015],
@@ -39,18 +41,37 @@ class LLMClient:
             "claude-haiku-4-5-20251001": [0.00025, 0.00125],
         }
         
-        if self.provider not in {"openai", "anthropic"}:
+        if self.provider not in {"openai", "anthropic", "openrouter"}:
             raise ValueError(f"Unknown provider: {self.provider}")
 
     def _get_api_key(self) -> str:
-        env_var = "OPENAI_API_KEY" if self.provider == "openai" else "ANTHROPIC_API_KEY"
+        env_vars = {
+            "openai": "OPENAI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+        }
+        env_var = env_vars[self.provider]
         api_key = (get_settings().active_llm_api_key or "").strip()
         if not api_key or api_key.startswith("your_"):
             raise OSError(
                 f"[LLMClient] {env_var} is not configured. Copy .env.example to .env "
                 "and set a real key before running agent calls."
             )
+        if self.provider == "openai" and api_key.startswith("sk-or-"):
+            raise OSError(
+                "[LLMClient] OPENAI_API_KEY looks like an OpenRouter key. Set "
+                "LLM_PROVIDER=openrouter and move the key to OPENROUTER_API_KEY."
+            )
         return api_key
+
+    def _openrouter_headers(self) -> Dict[str, str]:
+        settings = get_settings()
+        headers = {}
+        if settings.openrouter_site_url:
+            headers["HTTP-Referer"] = settings.openrouter_site_url
+        if settings.openrouter_app_name:
+            headers["X-OpenRouter-Title"] = settings.openrouter_app_name
+        return headers
 
     def _ensure_client(self) -> Any:
         """Create provider SDK clients lazily so imports/tests do not need real keys."""
@@ -61,6 +82,13 @@ class LLMClient:
         if self.provider == "openai":
             import openai
             self.client = openai.OpenAI(api_key=api_key)
+        elif self.provider == "openrouter":
+            import openai
+            self.client = openai.OpenAI(
+                api_key=api_key,
+                base_url="https://openrouter.ai/api/v1",
+                default_headers=self._openrouter_headers(),
+            )
         elif self.provider == "anthropic":
             import anthropic
             self.client = anthropic.Anthropic(api_key=api_key)
@@ -84,14 +112,18 @@ class LLMClient:
     )
     def chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000) -> str:
         client = self._ensure_client()
-        if self.provider == "openai":
+        if self.provider in {"openai", "openrouter"}:
             response = client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens
             )
-            self._update_usage(response.usage.prompt_tokens, response.usage.completion_tokens)
+            usage = response.usage
+            self._update_usage(
+                getattr(usage, "prompt_tokens", 0),
+                getattr(usage, "completion_tokens", 0),
+            )
             return response.choices[0].message.content
         elif self.provider == "anthropic":
             system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
@@ -113,20 +145,28 @@ class LLMClient:
         api_key = self._get_api_key()
 
         async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0)) as client:
-            if self.provider == "openai":
+            if self.provider in {"openai", "openrouter"}:
                 headers = {
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 }
+                if self.provider == "openrouter":
+                    headers.update(self._openrouter_headers())
+
                 data = {
                     "model": self.model,
                     "messages": messages,
                     "temperature": temperature,
                     "max_tokens": max_tokens,
                     "stream": True,
-                    "stream_options": {"include_usage": True}
                 }
-                async with client.stream("POST", "https://api.openai.com/v1/chat/completions", headers=headers, json=data) as response:
+                url = "https://api.openai.com/v1/chat/completions"
+                if self.provider == "openai":
+                    data["stream_options"] = {"include_usage": True}
+                else:
+                    url = "https://openrouter.ai/api/v1/chat/completions"
+
+                async with client.stream("POST", url, headers=headers, json=data) as response:
                     async for line in response.aiter_lines():
                         if line.startswith("data: "):
                             content = line[6:]

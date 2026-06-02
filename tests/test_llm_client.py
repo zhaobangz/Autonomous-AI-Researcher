@@ -5,7 +5,7 @@ Covers:
   * Provider validation
   * API key resolution and placeholder rejection
   * Cost / usage accounting (known + unknown models)
-  * chat_completion success paths for OpenAI and Anthropic
+  * chat_completion success paths for OpenAI, Anthropic, and OpenRouter
   * structured_output parsing, fenced-block stripping, and retry on bad JSON
 """
 
@@ -24,10 +24,11 @@ class TestInit:
         with pytest.raises(ValueError, match="Unknown provider"):
             LLMClient()
 
-    def test_default_provider_is_openai(self, monkeypatch):
+    def test_default_provider_is_openrouter(self, monkeypatch):
         monkeypatch.delenv("LLM_PROVIDER", raising=False)
         client = LLMClient()
-        assert client.provider == "openai"
+        assert client.provider == "openrouter"
+        assert client.model == "openai/gpt-4o-mini"
 
     def test_initial_usage_is_zero(self, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openai")
@@ -55,11 +56,24 @@ class TestApiKey:
         with pytest.raises(EnvironmentError):
             client._get_api_key()
 
+    def test_openrouter_key_in_openai_slot_raises(self, monkeypatch):
+        monkeypatch.setenv("LLM_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-or-v1-test")
+        client = LLMClient()
+        with pytest.raises(EnvironmentError, match="OpenRouter key"):
+            client._get_api_key()
+
     def test_anthropic_uses_anthropic_env(self, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "anthropic")
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
         client = LLMClient()
         assert client._get_api_key() == "test-anthropic-key"
+
+    def test_openrouter_uses_openrouter_env(self, monkeypatch):
+        monkeypatch.setenv("LLM_PROVIDER", "openrouter")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+        client = LLMClient()
+        assert client._get_api_key() == "test-openrouter-key"
 
 
 # ── Cost accounting ─────────────────────────────────────────────────────
@@ -145,6 +159,36 @@ class TestChatCompletion:
         called_kwargs = fake_client.messages.create.call_args.kwargs
         assert called_kwargs["system"] == "be brief"
         assert all(m["role"] != "system" for m in called_kwargs["messages"])
+
+    def test_openrouter_success_path(self, mocker, monkeypatch):
+        monkeypatch.setenv("LLM_PROVIDER", "openrouter")
+        monkeypatch.setenv("LLM_MODEL", "openai/gpt-4o-mini")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+        monkeypatch.setenv("OPENROUTER_SITE_URL", "https://example.com")
+        monkeypatch.setenv("OPENROUTER_APP_NAME", "Test App")
+
+        fake_response = mocker.MagicMock()
+        fake_response.choices[0].message.content = "router says hi"
+        fake_response.usage.prompt_tokens = 8
+        fake_response.usage.completion_tokens = 5
+
+        fake_client = mocker.MagicMock()
+        fake_client.chat.completions.create.return_value = fake_response
+        openai_class = mocker.patch("openai.OpenAI", return_value=fake_client)
+
+        client = LLMClient()
+        out = client.chat_completion([{"role": "user", "content": "hi"}])
+
+        assert out == "router says hi"
+        assert client.usage["prompt_tokens"] == 8
+        assert client.usage["completion_tokens"] == 5
+        called_kwargs = openai_class.call_args.kwargs
+        assert called_kwargs["api_key"] == "test-openrouter-key"
+        assert str(called_kwargs["base_url"]) == "https://openrouter.ai/api/v1"
+        assert called_kwargs["default_headers"] == {
+            "HTTP-Referer": "https://example.com",
+            "X-OpenRouter-Title": "Test App",
+        }
 
 
 # ── structured_output ───────────────────────────────────────────────────

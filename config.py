@@ -25,10 +25,14 @@ _KNOWN_MODELS = {
     "gpt-4o",
     "gpt-4o-mini",
     "gpt-3.5-turbo",
+    "openai/gpt-4o",
+    "openai/gpt-4o-mini",
     "claude-opus-4-7",
     "claude-opus-4-6",
     "claude-sonnet-4-6",
     "claude-haiku-4-5-20251001",
+    "anthropic/claude-sonnet-4",
+    "anthropic/claude-3.5-sonnet",
 }
 
 _WEAK_SECRET_VALUES = {
@@ -39,6 +43,10 @@ _WEAK_SECRET_VALUES = {
     "secret",
     "your_internal_api_key_here",
 }
+
+
+def _looks_like_openrouter_key(value: str) -> bool:
+    return value.strip().startswith("sk-or-")
 
 
 class Settings(BaseSettings):
@@ -53,17 +61,28 @@ class Settings(BaseSettings):
 
     # ── LLM provider ───────────────────────────────────────────────────────
     llm_provider: str = Field(
-        default="openai",
+        default="openrouter",
         description="Which LLM provider to use.",
     )
     llm_model: str = Field(
-        default="gpt-4o",
+        default="openai/gpt-4o-mini",
         description="Model identifier for the chosen provider.",
     )
 
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key.")
     anthropic_api_key: Optional[str] = Field(
         default=None, description="Anthropic API key."
+    )
+    openrouter_api_key: Optional[str] = Field(
+        default=None, description="OpenRouter API key."
+    )
+    openrouter_site_url: Optional[str] = Field(
+        default=None,
+        description="Optional site URL sent to OpenRouter for app attribution.",
+    )
+    openrouter_app_name: str = Field(
+        default="Autonomous AI Researcher",
+        description="Optional app title sent to OpenRouter for attribution.",
     )
 
     # ── Optional tool keys ─────────────────────────────────────────────────
@@ -163,8 +182,8 @@ class Settings(BaseSettings):
     @classmethod
     def _normalize_provider(cls, v: str) -> str:
         provider = v.lower().strip()
-        if provider not in {"openai", "anthropic"}:
-            raise ValueError("Unknown provider: LLM_PROVIDER must be either 'openai' or 'anthropic'")
+        if provider not in {"openai", "anthropic", "openrouter"}:
+            raise ValueError("Unknown provider: LLM_PROVIDER must be 'openai', 'anthropic', or 'openrouter'")
         return provider
 
     @field_validator("internal_api_key")
@@ -199,15 +218,30 @@ class Settings(BaseSettings):
     @property
     def active_llm_api_key(self) -> Optional[str]:
         """Return the key for the selected provider, if configured."""
-        return self.openai_api_key if self.llm_provider == "openai" else self.anthropic_api_key
+        keys = {
+            "openai": self.openai_api_key,
+            "anthropic": self.anthropic_api_key,
+            "openrouter": self.openrouter_api_key,
+        }
+        return keys[self.llm_provider]
 
     def validate_llm_ready(self) -> None:
         """Raise a clear error only when an actual LLM call is about to run."""
-        key_name = "OPENAI_API_KEY" if self.llm_provider == "openai" else "ANTHROPIC_API_KEY"
+        key_names = {
+            "openai": "OPENAI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
+        }
+        key_name = key_names[self.llm_provider]
         key = self.active_llm_api_key
         if not key or key.startswith("your_"):
             raise RuntimeError(
                 f"{key_name} is not configured. Copy .env.example to .env and set a real key."
+            )
+        if self.llm_provider == "openai" and _looks_like_openrouter_key(key):
+            raise RuntimeError(
+                "OPENAI_API_KEY looks like an OpenRouter key. Set "
+                "LLM_PROVIDER=openrouter and move the key to OPENROUTER_API_KEY."
             )
 
     @property

@@ -52,10 +52,25 @@ function createMockResponse() {
 
 async function main() {
     loadDotEnv(path.join(root, ".env"));
-    process.env.OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.startsWith("your_")) {
-        throw new Error("OPENAI_API_KEY is not configured.");
+    const provider = (process.env.LLM_PROVIDER || "").toLowerCase().trim()
+        || "openrouter";
+    const keyName = provider === "openrouter" ? "OPENROUTER_API_KEY" : "OPENAI_API_KEY";
+    if (!["openai", "openrouter"].includes(provider)) {
+        throw new Error("The public chat smoke test supports LLM_PROVIDER=openai or openrouter.");
+    }
+
+    if (provider === "openai") {
+        process.env.OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+    } else {
+        process.env.OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || process.env.LLM_MODEL || "openai/gpt-4o-mini";
+    }
+
+    if (!process.env[keyName] || process.env[keyName].startsWith("your_")) {
+        throw new Error(`${keyName} is not configured.`);
+    }
+    if (provider === "openai" && process.env.OPENAI_API_KEY.startsWith("sk-or-")) {
+        throw new Error("OPENAI_API_KEY looks like an OpenRouter key. Set LLM_PROVIDER=openrouter and move the key to OPENROUTER_API_KEY.");
     }
 
     const handler = require(path.join(root, "api/chat.js"));

@@ -51,6 +51,20 @@ class TestValidateLlmReady:
         s = Settings(llm_provider="openai", openai_api_key="test-openai-key")
         s.validate_llm_ready()  # no raise
 
+    def test_openrouter_key_passes(self):
+        s = Settings(llm_provider="openrouter", openrouter_api_key="test-openrouter-key")
+        s.validate_llm_ready()  # no raise
+
+    def test_missing_openrouter_key_raises(self):
+        s = Settings(llm_provider="openrouter", openrouter_api_key=None)
+        with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY"):
+            s.validate_llm_ready()
+
+    def test_openrouter_key_in_openai_slot_raises(self):
+        s = Settings(llm_provider="openai", openai_api_key="sk-or-v1-test")
+        with pytest.raises(RuntimeError, match="OpenRouter key"):
+            s.validate_llm_ready()
+
 
 class TestAllowedOriginsList:
     def test_parses_comma_separated(self):

@@ -30,8 +30,11 @@ jobs:
         env:
           DISPATCH_QUESTION: ${{ github.event.inputs.question }}
           SECRET_QUESTION: ${{ secrets.RESEARCH_QUESTION }}
+          LLM_PROVIDER_VALUE: ${{ secrets.LLM_PROVIDER }}
+          LLM_MODEL_VALUE: ${{ secrets.LLM_MODEL }}
           OPENAI_API_KEY_VALUE: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY_VALUE: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY_VALUE: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           question="${DISPATCH_QUESTION:-$SECRET_QUESTION}"
           if [ -z "$question" ]; then
@@ -44,16 +47,25 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_ENV"
 
-          if [ -n "$OPENAI_API_KEY_VALUE" ]; then
-            echo "LLM_PROVIDER=openai" >> "$GITHUB_ENV"
+          if [ -n "$LLM_PROVIDER_VALUE" ]; then
+            echo "LLM_PROVIDER=$LLM_PROVIDER_VALUE" >> "$GITHUB_ENV"
+          elif [ -n "$OPENROUTER_API_KEY_VALUE" ]; then
+            echo "LLM_PROVIDER=openrouter" >> "$GITHUB_ENV"
           elif [ -n "$ANTHROPIC_API_KEY_VALUE" ]; then
             echo "LLM_PROVIDER=anthropic" >> "$GITHUB_ENV"
+          elif [ -n "$OPENAI_API_KEY_VALUE" ]; then
+            echo "LLM_PROVIDER=openai" >> "$GITHUB_ENV"
+          fi
+
+          if [ -n "$LLM_MODEL_VALUE" ]; then
+            echo "LLM_MODEL=$LLM_MODEL_VALUE" >> "$GITHUB_ENV"
           fi
 
       - name: Run headless research
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           set +e
           python scripts/run_research.py "$RESEARCH_QUESTION" > run_output.txt 2>&1

@@ -34,8 +34,10 @@ for (const snippet of requiredSnippets) {
     }
 }
 
-if (index.includes("OPENAI_API_KEY")) {
-    throw new Error("index.html must not reference OPENAI_API_KEY.");
+for (const secretName of ["OPENAI_API_KEY", "OPENROUTER_API_KEY", "ANTHROPIC_API_KEY"]) {
+    if (index.includes(secretName)) {
+        throw new Error(`index.html must not reference ${secretName}.`);
+    }
 }
 
 const app = fs.readFileSync(path.join(root, "assets/js/app.js"), "utf8");

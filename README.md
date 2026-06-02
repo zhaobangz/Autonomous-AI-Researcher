@@ -72,7 +72,7 @@ Open the hosted site:
 https://research.autonomous-ai.io
 ```
 
-Enter a research question and click **Run prompt**. The public prompt form calls a separately hosted HTTPS backend and does not expose `OPENAI_API_KEY` in browser code.
+Enter a research question and click **Run prompt**. The public prompt form calls a separately hosted HTTPS backend and does not expose provider API keys in browser code.
 
 For your own fork, do not rely on this repository owner's backend endpoint. Deploy your own endpoint by following [Deploy Your Own Public Demo](#deploy-your-own-public-demo).
 
@@ -84,7 +84,7 @@ For your own fork, do not rely on this repository owner's backend endpoint. Depl
 
 - Python 3.10+
 - Docker Desktop (required for the code sandbox)
-- An OpenAI or Anthropic API key
+- An OpenRouter API key; OpenAI or Anthropic keys are optional alternate providers
 - Optional: Redis for persistent multi-worker run state. Without Redis, the API falls back to in-memory local tracking.
 
 ### 2. Install
@@ -101,15 +101,18 @@ pip install -e .
 
 ```bash
 cp .env.example .env
-# Edit .env — at minimum set OPENAI_API_KEY (or ANTHROPIC_API_KEY + LLM_PROVIDER=anthropic)
+# Edit .env — set the matching key for LLM_PROVIDER
 ```
 
 All configuration options are documented in `.env.example`.
 
-OpenAI model selection is controlled by configuration, not by the API key itself:
+OpenRouter is the default provider. Model selection is controlled by configuration, not by the API key itself:
 
-- Full local app: set `LLM_MODEL`, for example `gpt-4o`, `gpt-4o-mini`, or another model your OpenAI account can access.
-- Public Vercel chat endpoint: set `OPENAI_MODEL`, for example `gpt-4o-mini` for lower-cost demos.
+- OpenRouter: `LLM_PROVIDER=openrouter`, `OPENROUTER_API_KEY=...`, `LLM_MODEL=openai/gpt-4o-mini`
+- OpenAI: `LLM_PROVIDER=openai`, `OPENAI_API_KEY=...`, `LLM_MODEL=gpt-4o-mini`
+- Anthropic: `LLM_PROVIDER=anthropic`, `ANTHROPIC_API_KEY=...`, `LLM_MODEL=claude-sonnet-4-6`
+
+Do not put an OpenRouter key in `OPENAI_API_KEY`; OpenRouter keys belong in `OPENROUTER_API_KEY`.
 
 ### 4. Run
 
@@ -140,23 +143,25 @@ python scripts/batch_research.py questions.txt
 
 # GitHub Actions
 # Push to main or manually trigger the "Scheduled Research" workflow.
-# Set RESEARCH_QUESTION and OPENAI_API_KEY (or ANTHROPIC_API_KEY)
-# as repository secrets.
+# Set RESEARCH_QUESTION plus the matching LLM_PROVIDER/API-key/model secrets.
 ```
 
 ---
 
 ## Deploy Your Own Public Demo
 
-GitHub Pages can host the frontend, but it cannot run server code or safely store `OPENAI_API_KEY`. To make your fork's prompt form live, deploy the included lightweight Vercel backend and point the frontend at it.
+GitHub Pages can host the frontend, but it cannot run server code or safely store API keys. To make your fork's prompt form live, deploy the included lightweight Vercel backend and point the frontend at it.
 
 ### 1. Deploy the Vercel backend
 
 ```bash
 cd vercel-chat-api
 npx vercel link
-npx vercel env add OPENAI_API_KEY production
-npx vercel env add OPENAI_MODEL production
+npx vercel env add LLM_PROVIDER production
+npx vercel env add OPENROUTER_API_KEY production
+npx vercel env add OPENROUTER_MODEL production
+npx vercel env add OPENROUTER_SITE_URL production
+npx vercel env add OPENROUTER_APP_NAME production
 npx vercel env add SITE_RATE_LIMIT_PER_MINUTE production
 npx vercel env add PUBLIC_SITE_ORIGIN production
 npx vercel deploy --prod
@@ -165,12 +170,15 @@ npx vercel deploy --prod
 Recommended values:
 
 ```text
-OPENAI_MODEL=gpt-4o-mini
+LLM_PROVIDER=openrouter
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_SITE_URL=https://your-github-pages-domain.example
+OPENROUTER_APP_NAME=Autonomous AI Researcher
 SITE_RATE_LIMIT_PER_MINUTE=6
 PUBLIC_SITE_ORIGIN=https://your-github-pages-domain.example
 ```
 
-Set a conservative `SITE_RATE_LIMIT_PER_MINUTE` because public visitors can submit prompts that consume your OpenAI credits.
+For an OpenAI-backed deployment instead, use `LLM_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL=gpt-4o-mini`. Set a conservative `SITE_RATE_LIMIT_PER_MINUTE` because public visitors can submit prompts that consume your provider credits.
 
 ### 2. Connect the frontend
 
@@ -202,8 +210,11 @@ Push your changes to `main`. The included GitHub Pages workflow builds `_site/` 
 
 | Variable | Default | Description |
 |---|---|---|
-| `LLM_PROVIDER` | `openai` | `openai` or `anthropic` |
-| `LLM_MODEL` | `gpt-4o` | Model string for the chosen provider |
+| `LLM_PROVIDER` | `openrouter` | `openrouter`, `openai`, or `anthropic` |
+| `LLM_MODEL` | `openai/gpt-4o-mini` | Model string for the chosen provider |
+| `OPENROUTER_API_KEY` | — | Required when `LLM_PROVIDER=openrouter` |
+| `OPENROUTER_SITE_URL` | — | Optional OpenRouter attribution URL |
+| `OPENROUTER_APP_NAME` | `Autonomous AI Researcher` | Optional OpenRouter attribution title |
 | `OPENAI_API_KEY` | — | Required when `LLM_PROVIDER=openai` |
 | `ANTHROPIC_API_KEY` | — | Required when `LLM_PROVIDER=anthropic` |
 | `TAVILY_API_KEY` | — | Optional. Better web search. Falls back to DuckDuckGo |
@@ -212,7 +223,8 @@ Push your changes to `main`. The included GitHub Pages workflow builds `_site/` 
 | `RUN_TIMEOUT_SECONDS` | `600` | Hard timeout per run |
 | `RUNS_DIR` | `./runs` | Where run artefacts are stored |
 | `INTERNAL_API_KEY` | — | Require a non-placeholder `X-API-Key` of at least 16 chars on REST and WebSocket API routes |
-| `OPENAI_MODEL` | `gpt-4o-mini` | Model for the lightweight public Vercel chat endpoint |
+| `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model for the lightweight public Vercel chat endpoint |
+| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | OpenRouter model for the lightweight public Vercel chat endpoint |
 | `PUBLIC_SITE_ORIGIN` | — | Comma-separated frontend origins allowed to call the public prompt endpoint |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Max run starts per IP per minute |
 | `LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
@@ -261,7 +273,7 @@ python3 -m http.server 3000 --directory _site
 
 Open **http://localhost:3000** to preview it locally.
 
-GitHub Pages cannot run server code or store `OPENAI_API_KEY`, so live prompt responses require a separately hosted HTTPS backend. Set that endpoint in `assets/js/config.js`.
+GitHub Pages cannot run server code or store provider API keys, so live prompt responses require a separately hosted HTTPS backend. Set that endpoint in `assets/js/config.js`.
 
 To add a demo video later, place a file such as `assets/media/demo.mp4` in the repo and set:
 
@@ -280,7 +292,7 @@ For hosted video platforms, set `demoEmbedUrl` in `assets/js/config.js` instead.
 
 | Layer | Technology |
 |---|---|
-| LLM | OpenAI model from `LLM_MODEL` / Anthropic Claude |
+| LLM | OpenRouter by default; OpenAI or Anthropic optional via `LLM_PROVIDER` / `LLM_MODEL` |
 | Backend | FastAPI + uvicorn + WebSockets |
 | Frontend | Streamlit |
 | Memory | ChromaDB (local) / Pinecone (cloud) |
@@ -306,7 +318,7 @@ For hosted video platforms, set `demoEmbedUrl` in `assets/js/config.js` instead.
 
 - **Docker daemon unavailable** — If you see `docker: Cannot connect to the Docker daemon`, start Docker Desktop and retry the run.
 - **WeasyPrint errors on macOS** — Install the required system libraries with `brew install pango cairo`.
-- **OpenAI 401 errors** — Check your `.env` file, confirm `OPENAI_API_KEY` is valid, and ensure there is no extra whitespace.
+- **Provider 401 errors** — Check your `.env` or Vercel environment variables, confirm the API key matches `LLM_PROVIDER`, and ensure there is no extra whitespace.
 - **Public prompt fails before submitting** — Confirm the Vercel endpoint responds to `OPTIONS` preflight and includes `Access-Control-Allow-Origin` for your Pages/custom domain.
 - **Public prompt returns "Origin not allowed"** — Add your GitHub Pages/custom domain origin to `PUBLIC_SITE_ORIGIN` in Vercel and redeploy. Use origins only, for example `https://zhaobangz.github.io`, with no path.
 - **Custom domain does not resolve** — Keep `CNAME` in the repo, then add a DNS `CNAME` record at your domain provider from `research` to `zhaobangz.github.io`.
