@@ -7,7 +7,8 @@
 __pycache__/
 *.pyc
 
-api/
+api/*
+!api/chat.js
 agents/
 core/
 memory/
@@ -18,7 +19,10 @@ tools/
 ui/
 autonomous_ai_researcher.egg-info/
 
-vercel-chat-api/
+vercel-chat-api/*
+!vercel-chat-api/api/
+vercel-chat-api/api/*
+!vercel-chat-api/api/chat.js
 
 Dockerfile
 docker-compose.yml
