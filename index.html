@@ -43,9 +43,9 @@
     <main id="workspace" class="workspace">
         <section class="hero-section shell" aria-labelledby="mission-title">
             <div class="mission-copy">
-                <p class="eyebrow">Research lab in your browser</p>
-                <h1 id="mission-title">Ask a big question. Let five tiny agents organize the first draft.</h1>
-                <p class="hero-sub">Autonomous AI Researcher turns a research prompt into a planned, critiqued, and evidence-backed brief — so you can move from question to insight without the blank-page paralysis.</p>
+                <p class="eyebrow">Research workspace</p>
+                <h1 id="mission-title">Turn a research question into an agent-reviewed brief.</h1>
+                <p class="hero-sub">Use the public prompt for a fast brief, or run the full local stack for planning, literature search, code execution, critique, debate, and report export.</p>
                 <div class="agent-pills" aria-label="Workflow agents">
                     <span class="agent-pill pill-planner">Planner</span>
                     <span class="agent-pill pill-researcher">Researcher</span>
@@ -69,6 +69,54 @@
             </div>
         </section>
 
+        <section class="tool-section shell" aria-label="Research prompt tool">
+            <div class="workspace-heading">
+                <p class="eyebrow">Try it live</p>
+                <h2>Start with one research question.</h2>
+                <p>Keep it specific enough for a short brief. The public page calls a separately hosted endpoint when one is configured.</p>
+            </div>
+
+            <div class="app-grid">
+                <div class="card prompt-card">
+                    <form id="prompt-form" class="prompt-panel">
+                        <div class="field-group">
+                            <p class="section-label">Your question</p>
+                            <label for="prompt">Research prompt</label>
+                            <textarea id="prompt" name="prompt" maxlength="2000" required>Compare two practical ways autonomous AI agents could help researchers conduct more reliable literature reviews.</textarea>
+                            <div class="char-bar" aria-hidden="true">
+                                <span class="char-bar-track">
+                                    <span class="char-bar-fill"></span>
+                                </span>
+                            </div>
+                            <div class="field-meta">
+                                <span id="prompt-count">0 / 2000</span>
+                                <span>Provider keys stay on the server.</span>
+                            </div>
+                        </div>
+
+                        <div class="button-row">
+                            <button id="submit-button" type="submit">Run prompt</button>
+                            <button id="clear-button" type="button" class="secondary-button">Clear</button>
+                        </div>
+                    </form>
+                </div>
+
+                <section class="response-panel card" aria-live="polite" aria-labelledby="response-title">
+                    <div class="response-header">
+                        <div>
+                            <p class="eyebrow">Model response</p>
+                            <h2 id="response-title">Research Brief</h2>
+                        </div>
+                        <div class="response-actions">
+                            <button id="copy-button" type="button" class="icon-button">Copy</button>
+                            <span id="status-pill" class="status-pill">Ready</span>
+                        </div>
+                    </div>
+                    <pre id="response-output">Awaiting research brief.</pre>
+                </section>
+            </div>
+        </section>
+
         <section class="how-section shell" aria-labelledby="how-title">
             <div class="section-kicker">
                 <p class="eyebrow">How it works</p>
@@ -76,22 +124,22 @@
             </div>
             <div class="how-grid">
                 <article class="how-card">
-                    <span class="how-icon" aria-hidden="true">🧭</span>
+                    <span class="how-icon" aria-hidden="true">01</span>
                     <h3>Plan the route</h3>
                     <p>The Planner breaks a broad question into concrete research steps before the model starts writing.</p>
                 </article>
                 <article class="how-card">
-                    <span class="how-icon" aria-hidden="true">🔎</span>
+                    <span class="how-icon" aria-hidden="true">02</span>
                     <h3>Gather context</h3>
                     <p>The Researcher looks for relevant ideas and keeps the answer focused on evidence, not guesswork.</p>
                 </article>
                 <article class="how-card">
-                    <span class="how-icon" aria-hidden="true">🧪</span>
+                    <span class="how-icon" aria-hidden="true">03</span>
                     <h3>Stress-test claims</h3>
                     <p>The Critic and Debater look for weak spots, risks, and next steps a human reviewer should check.</p>
                 </article>
                 <article class="how-card">
-                    <span class="how-icon" aria-hidden="true">📄</span>
+                    <span class="how-icon" aria-hidden="true">04</span>
                     <h3>Share a brief</h3>
                     <p>The final response is formatted as a readable research brief you can copy, discuss, or revise.</p>
                 </article>
@@ -118,54 +166,6 @@
                     </div>
                 </div>
                 <video id="demo-video" class="demo-video" controls preload="metadata" playsinline hidden></video>
-            </div>
-        </section>
-
-        <section class="tool-section shell" aria-label="Research prompt tool">
-            <div class="workspace-heading">
-                <p class="eyebrow">Try it live</p>
-                <h2>Start with one research question.</h2>
-                <p>Keep it specific enough for a short brief. The public page calls a separately hosted endpoint when one is configured.</p>
-            </div>
-
-            <div class="app-grid">
-                <div class="card prompt-card">
-                    <form id="prompt-form" class="prompt-panel">
-                        <div class="field-group">
-                            <p class="section-label">Your question</p>
-                            <label for="prompt">Research prompt</label>
-                            <textarea id="prompt" name="prompt" maxlength="2000" required>Compare two practical ways autonomous AI agents could help researchers conduct more reliable literature reviews.</textarea>
-                            <div class="char-bar" aria-hidden="true">
-                                <span class="char-bar-track">
-                                    <span class="char-bar-fill"></span>
-                                </span>
-                            </div>
-                            <div class="field-meta">
-                                <span id="prompt-count">0 / 2000</span>
-                                <span>OpenAI key stays on the server.</span>
-                            </div>
-                        </div>
-
-                        <div class="button-row">
-                            <button id="submit-button" type="submit">Run prompt</button>
-                            <button id="clear-button" type="button" class="secondary-button">Clear</button>
-                        </div>
-                    </form>
-                </div>
-
-                <section class="response-panel card" aria-live="polite" aria-labelledby="response-title">
-                    <div class="response-header">
-                        <div>
-                            <p class="eyebrow">Model response</p>
-                            <h2 id="response-title">Research Brief</h2>
-                        </div>
-                        <div class="response-actions">
-                            <button id="copy-button" type="button" class="icon-button">Copy</button>
-                            <span id="status-pill" class="status-pill">Ready</span>
-                        </div>
-                    </div>
-                    <pre id="response-output">Awaiting research brief.</pre>
-                </section>
             </div>
         </section>
     </main>

@@ -6,7 +6,9 @@
 ![UI](https://img.shields.io/badge/UI-Static%20Site%20%2B%20Streamlit-0f9f8f)
 ![Agents](https://img.shields.io/badge/Agents-Planner%20%7C%20Researcher%20%7C%20Coder%20%7C%20Critic%20%7C%20Debater-f6a623)
 
-An autonomous multi-agent system that conducts end-to-end scientific research: it searches academic literature, synthesises findings, writes and executes Python experiments in a sandboxed Docker container, critiques its own results through an adversarial debate loop, and produces structured Markdown + PDF reports.
+Autonomous AI Researcher has two surfaces: a lightweight public prompt demo and a full local multi-agent researcher. The full local stack searches academic literature, synthesizes findings, writes and executes Python experiments in a sandboxed Docker container, critiques its own results through an adversarial debate loop, and produces structured Markdown + PDF reports.
+
+For step-by-step user instructions, see [USER_MANUAL.md](USER_MANUAL.md).
 
 ---
 
@@ -24,13 +26,13 @@ The public website is meant as a lightweight demo. The full local app is the com
 
 ## Key Capabilities
 
-- **Literature Synthesis** — parallel arXiv search and PDF parsing with semantic summarisation
-- **Hypothesis-Driven Experimentation** — generates and self-corrects Python experiments
-- **Secure Code Execution** — isolated Docker sandbox with CPU/memory limits
+- **Literature Synthesis** — parallel arXiv search and PDF parsing with web-search fallback
+- **Hypothesis-Driven Experimentation** — generates, executes, and retries Python experiments
+- **Sandboxed Code Execution** — Docker executor with no network, non-root user, CPU/memory limits, and reduced privileges
 - **Adversarial Quality Control** — Critic and Debater agents score and challenge results
-- **Long-Term Memory** — ChromaDB vector store + knowledge graph links findings across runs
-- **Real-Time UI** — Streamlit dashboard with live agent feed, streaming tokens, and run history
-- **Production-Grade API** — FastAPI backend with WebSocket streaming, rate limiting, and run cancellation
+- **Long-Term Memory** — per-run ChromaDB vector store plus a global knowledge graph across runs
+- **Real-Time UI** — Streamlit dashboard with live task cards, token streaming, cancellation, and report downloads
+- **Operational API** — FastAPI backend with WebSocket streaming, optional `X-API-Key` protection, rate limiting, Redis fallback, run listing, and cancellation
 
 ---
 
@@ -57,7 +59,7 @@ User ──► Streamlit UI ──► FastAPI (WebSocket) ──► Agent Loop
 | Agent | Role |
 |---|---|
 | **Planner** | Decomposes the research question into a structured step plan |
-| **Researcher** | Runs arXiv search + PDF parsing via a ReAct loop |
+| **Researcher** | Runs arXiv search, PDF parsing, and web-search fallback via a ReAct loop |
 | **Coder** | Translates insights into executable Python experiments |
 | **Critic** | Scores results (0–1 confidence) and identifies weaknesses |
 | **Debater** | Challenges the Critic's conclusions to prevent confirmation bias |
@@ -74,6 +76,8 @@ https://research.autonomous-ai.io
 
 Enter a research question and click **Run prompt**. The public prompt form calls a separately hosted HTTPS backend and does not expose provider API keys in browser code.
 
+The public website is a concise prompt demo. It does not run the full local agent loop, arXiv/PDF tools, Docker executor, or report generator.
+
 For your own fork, do not rely on this repository owner's backend endpoint. Deploy your own endpoint by following [Deploy Your Own Public Demo](#deploy-your-own-public-demo).
 
 ---
@@ -82,7 +86,7 @@ For your own fork, do not rely on this repository owner's backend endpoint. Depl
 
 ### 1. Prerequisites
 
-- Python 3.10+
+- Python 3.11 recommended; Python 3.10+ is declared in `pyproject.toml`
 - Docker Desktop (required for the code sandbox)
 - An OpenRouter API key; OpenAI or Anthropic keys are optional alternate providers
 - Optional: Redis for persistent multi-worker run state. Without Redis, the API falls back to in-memory local tracking.
@@ -142,7 +146,7 @@ python scripts/run_research.py "Your research question here"
 python scripts/batch_research.py questions.txt
 
 # GitHub Actions
-# Push to main or manually trigger the "Scheduled Research" workflow.
+# Manually trigger the "Scheduled Research" workflow, or let its daily cron run.
 # Set RESEARCH_QUESTION plus the matching LLM_PROVIDER/API-key/model secrets.
 ```
 
@@ -151,6 +155,8 @@ python scripts/batch_research.py questions.txt
 ## Deploy Your Own Public Demo
 
 GitHub Pages can host the frontend, but it cannot run server code or safely store API keys. To make your fork's prompt form live, deploy the included lightweight Vercel backend and point the frontend at it.
+
+The recommended backend project is `vercel-chat-api/`. The root `api/chat.js` file is a compatibility wrapper around the same handler for Vercel deployments that intentionally include the chat function with the static frontend.
 
 ### 1. Deploy the Vercel backend
 
@@ -187,6 +193,9 @@ Update `assets/js/config.js`:
 ```js
 window.AIR_SITE_CONFIG = {
     chatEndpoint: "https://your-vercel-project.vercel.app/api/chat",
+    demoVideoSrc: "",
+    demoPosterSrc: "",
+    demoEmbedUrl: "",
 };
 ```
 
@@ -219,13 +228,21 @@ Push your changes to `main`. The included GitHub Pages workflow builds `_site/` 
 | `ANTHROPIC_API_KEY` | — | Required when `LLM_PROVIDER=anthropic` |
 | `TAVILY_API_KEY` | — | Optional. Better web search. Falls back to DuckDuckGo |
 | `VECTOR_BACKEND` | `chroma` | `chroma` (local) or `pinecone` (cloud) |
+| `PINECONE_API_KEY` | — | Required only when `VECTOR_BACKEND=pinecone` |
+| `PINECONE_INDEX` | `research-context` | Pinecone index name |
 | `MAX_STEPS` | `12` | Max agent steps per run |
+| `MAX_REROUTES` | `2` | Max low-confidence Coder reroutes per run |
 | `RUN_TIMEOUT_SECONDS` | `600` | Hard timeout per run |
 | `RUNS_DIR` | `./runs` | Where run artefacts are stored |
 | `INTERNAL_API_KEY` | — | Require a non-placeholder `X-API-Key` of at least 16 chars on REST and WebSocket API routes |
+| `ALLOWED_ORIGINS` | `http://localhost:8501` | Comma-separated explicit CORS origins for the FastAPI server |
+| `REDIS_URL` | `redis://localhost:6379` | Redis URL for run tracking; falls back to in-memory if unavailable |
+| `QUEUE_TTL_SECONDS` | `300` | Seconds to keep completed/failed in-memory run queues |
+| `API_BASE_URL` | `http://localhost:8000` | API base URL used by the Streamlit UI |
 | `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model for the lightweight public Vercel chat endpoint |
 | `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | OpenRouter model for the lightweight public Vercel chat endpoint |
 | `PUBLIC_SITE_ORIGIN` | — | Comma-separated frontend origins allowed to call the public prompt endpoint |
+| `SITE_RATE_LIMIT_PER_MINUTE` | `6` | Max public prompt submissions per IP per minute on the Vercel chat endpoint |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Max run starts per IP per minute |
 | `LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
 | `LOG_JSON` | `false` | Set `true` for structured JSON logs (Docker) |
@@ -239,9 +256,11 @@ Push your changes to `main`. The included GitHub Pages workflow builds `_site/` 
 | `GET` | `/health` | Health check |
 | `POST` | `/api/research` | Start a research run. Body: `{"question": "…"}` |
 | `GET` | `/api/runs` | List all tracked runs |
+| `GET` | `/api/research/{run_id}/status` | Check run status |
 | `DELETE` | `/api/research/{run_id}` | Cancel a running run |
 | `WS` | `/api/research/{run_id}/stream` | Stream task/token events; requires `X-API-Key` when `INTERNAL_API_KEY` is set |
 | `GET` | `/api/research/{run_id}/report` | Fetch completed report as Markdown |
+| `POST` | `/api/research/{run_id}/approve` | Publish an approval event for integrations |
 | `GET` | `/docs` | Interactive Swagger UI |
 
 ---
@@ -254,9 +273,13 @@ python -m pytest -q
 
 # Validate the static website
 npm run test:site
+npm run build
 
 # Test the configured live Vercel chat endpoint
 npm run test:live-chat
+
+# Check the lightweight Vercel chat function syntax
+cd vercel-chat-api && npm run check
 
 # Run the API with live reload
 uvicorn api.server:app --reload
@@ -279,12 +302,14 @@ To add a demo video later, place a file such as `assets/media/demo.mp4` in the r
 
 ```js
 window.AIR_SITE_CONFIG = {
+    chatEndpoint: "https://your-vercel-project.vercel.app/api/chat",
     demoVideoSrc: "assets/media/demo.mp4",
     demoPosterSrc: "assets/media/demo-poster.jpg",
+    demoEmbedUrl: "",
 };
 ```
 
-For hosted video platforms, set `demoEmbedUrl` in `assets/js/config.js` instead.
+For hosted video platforms, leave `demoVideoSrc` empty and set `demoEmbedUrl` in `assets/js/config.js` instead.
 
 ---
 

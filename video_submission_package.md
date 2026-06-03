@@ -21,20 +21,20 @@
   4. **Critic** — scores confidence (0–1), flags weaknesses, can trigger Coder retry
   5. **Debater** — adversarially challenges the Critic to prevent confirmation bias
   6. **Report Generator** — produces a structured Markdown + PDF report
-- Infrastructure callouts: ChromaDB vector memory, FastAPI + WebSocket streaming, Streamlit UI
+- Infrastructure callouts: ChromaDB/Pinecone vector memory, knowledge graph, FastAPI + WebSocket streaming, Streamlit UI
 
 ### Q3 — Potential Use Cases (1:40 – 2:20)
 - Academic researchers: automated literature reviews in minutes vs. days
 - ML engineers: rapid hypothesis validation — write a question, get experiment results
-- Analysts & journalists: fact-checked, cited research briefs on any topic
+- Analysts & journalists: source-aware, structured research briefs on technical topics
 - Enterprises: domain-specific research agents (legal, biomedical, financial)
 - Impact: democratises rigorous research — anyone with an API key gets a research team
 
 ### Q4 — What Would You Add? (2:20 – 2:50)
-- Real-time web search (Tavily) alongside arXiv for broader coverage
-- Fine-tuned domain-specific agents (biomedical, legal, financial reasoning)
+- Stronger source-quality controls for web search results beyond the current Tavily/DuckDuckGo fallback
+- Domain-specific agent profiles for biomedical, legal, and financial reasoning
 - Multi-user collaboration — shared run history, threaded annotations
-- Autonomous scheduling — recurring research loops triggered on a cadence
+- Better scheduled research reporting on top of the existing GitHub Actions scheduled workflow
 - Tool use expansion — SQL databases, code repos, proprietary APIs
 
 ---
@@ -75,9 +75,9 @@ The **Critic** reviews the results, assigns a confidence score from 0 to 1, iden
 
 Here's the part I'm most proud of: the **Debater**. Rather than just accepting the Critic's verdict, the Debater actively argues against it — challenging assumptions, surfacing alternative interpretations. It's adversarial quality control, built into the loop.
 
-Finally, a Report Generator assembles everything into a structured Markdown and PDF report — with citations, code, results, and the full critical review.
+Finally, a Report Generator assembles everything into a structured Markdown and PDF report — with literature synthesis, code, results, and the full critical review.
 
-The whole thing runs on a FastAPI backend with WebSocket streaming, so you watch it think in real time through a Streamlit dashboard. And a long-term memory layer using ChromaDB means the system learns across research runs — no redundant searches.
+The whole thing runs on a FastAPI backend with WebSocket streaming, so you watch it think in real time through a Streamlit dashboard. A memory layer using ChromaDB by default, Pinecone when configured, and a global knowledge graph lets the system reuse context across research runs.
 
 ---
 
@@ -85,7 +85,7 @@ The whole thing runs on a FastAPI backend with WebSocket streaming, so you watch
 
 Who is this for?
 
-An academic researcher can get a literature synthesis in minutes instead of days, with citations they can actually verify. An ML engineer can describe a hypothesis and receive experiment results — including code and a confidence-scored critique — before lunch. An analyst or journalist gets a cited, structured research brief on any topic.
+An academic researcher can get a literature synthesis in minutes instead of days, with source context they can review. An ML engineer can describe a hypothesis and receive experiment results — including code and a confidence-scored critique — before lunch. An analyst or journalist gets a structured research brief with risks and next steps.
 
 And longer term, this is a foundation for domain-specific agents — a biomedical research assistant, a legal research tool, a financial intelligence system — each running the same trusted pipeline, tuned to its domain.
 
@@ -97,15 +97,15 @@ The broader impact is real: this makes rigorous, peer-reviewed-style research ac
 
 A few things I'd add with more time.
 
-First, real-time web search alongside arXiv — so the system isn't limited to academic papers but can pull live information. Second, fine-tuned domain agents — a biomedical Researcher trained on PubMed, a legal Coder that understands case law. Third, multi-user collaboration — shared run history, threaded comments, team annotations.
+First, stronger source-quality controls on top of the existing arXiv and web-search tools — so the system can rank, filter, and explain why a source is trustworthy. Second, domain-specific agent profiles — a biomedical Researcher tuned for PubMed-style evidence, or a legal Researcher that understands case-law constraints. Third, multi-user collaboration — shared run history, threaded comments, team annotations.
 
-And the one I'm most excited about: autonomous scheduled research. You define a question and a cadence, and the system runs weekly, surfaces changes, and flags when the answer has evolved. Not just a research tool — a research *subscription*.
+And the one I'm most excited about extending: scheduled research. The repository already includes a GitHub Actions workflow for recurring or manually triggered headless runs; the next step is richer comparison reports that surface what changed since the last run.
 
 ---
 
 **[OUTRO — 2:48]**
 
-The Autonomous AI Researcher is open source, deployable in one command, and built to be extended. If you've ever spent a week on a literature review, you'll understand exactly why I built it.
+The Autonomous AI Researcher is open source, runnable locally with Docker Compose, and built to be extended. If you've ever spent a week on a literature review, you'll understand exactly why I built it.
 
 Thanks for watching.
 
@@ -144,7 +144,7 @@ Thanks for watching.
 
 **Slide 5 — Sample Output**
 > Show a real report snippet (e.g., the LoRA vs. full fine-tuning run)
-- Speaker note: "This is a real output from the system — literature synthesis, code results, critic score of 0.72, and the Debater's rebuttal." Point out the citations.
+- Speaker note: "This is a real output from the system — literature synthesis, code results, critic score of 0.72, and the Debater's rebuttal." Point out the source context and review sections.
 
 ---
 
@@ -161,8 +161,8 @@ Thanks for watching.
 ---
 
 **Slide 8 — Closing / Links**
-> GitHub repo | Public demo URL | Contact
-- Speaker note: Short. "Open source, one-command deploy. Link in the description." Done.
+> GitHub repo | Public demo URL | Local full-app instructions
+- Speaker note: Short. "Open source, static public demo, and a full local agent workflow. Link in the description." Done.
 
 ---
 

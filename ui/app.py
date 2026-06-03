@@ -47,37 +47,37 @@ STYLE_BLOCK = """
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
     :root {
-        --air-bg: #fff8ec;
-        --air-bg-soft: #f7efe2;
+        --air-bg: #f5f7f2;
+        --air-bg-soft: #e8eee9;
         --air-surface: #ffffff;
-        --air-surface-strong: #fff0d7;
-        --air-ink: #243047;
-        --air-muted: #687386;
-        --air-line: #eadfce;
-        --air-primary: #6d5dfc;
-        --air-primary-dark: #4f46d8;
-        --air-primary-light: rgba(109, 93, 252, 0.12);
-        --air-teal: #0f9f8f;
-        --air-teal-dark: #087f73;
-        --air-teal-light: rgba(15, 159, 143, 0.12);
-        --air-coral: #f97361;
-        --air-coral-light: rgba(249, 115, 97, 0.13);
-        --air-amber: #f6a623;
-        --air-amber-light: rgba(246, 166, 35, 0.16);
-        --air-sky: #2f80ed;
-        --air-sky-light: rgba(47, 128, 237, 0.12);
-        --air-rose: #e85d75;
-        --air-error: #c2413d;
-        --air-success: #18875f;
-        --air-agent-planner: #7c3aed;
-        --air-agent-researcher: #0f9f8f;
-        --air-agent-coder: #2f80ed;
-        --air-agent-critic: #f97361;
-        --air-agent-debater: #f6a623;
-        --air-shadow: 0 24px 70px rgba(57, 46, 34, 0.12);
-        --air-shadow-soft: 0 14px 35px rgba(57, 46, 34, 0.09);
-        --air-radius: 18px;
-        --air-radius-lg: 24px;
+        --air-surface-strong: #eef5f1;
+        --air-ink: #172033;
+        --air-muted: #5d6978;
+        --air-line: #d5dfdb;
+        --air-primary: #167c76;
+        --air-primary-dark: #0f5f5b;
+        --air-primary-light: rgba(22, 124, 118, 0.12);
+        --air-teal: #0f8f83;
+        --air-teal-dark: #0a6f67;
+        --air-teal-light: rgba(15, 143, 131, 0.12);
+        --air-coral: #df6256;
+        --air-coral-light: rgba(223, 98, 86, 0.12);
+        --air-amber: #c98f20;
+        --air-amber-light: rgba(201, 143, 32, 0.14);
+        --air-sky: #2f6fd6;
+        --air-sky-light: rgba(47, 111, 214, 0.12);
+        --air-rose: #b84d7a;
+        --air-error: #b93835;
+        --air-success: #217a55;
+        --air-agent-planner: #6f4bb8;
+        --air-agent-researcher: #167c76;
+        --air-agent-coder: #2f6fd6;
+        --air-agent-critic: #df6256;
+        --air-agent-debater: #c98f20;
+        --air-shadow: 0 24px 60px rgba(23, 32, 51, 0.12);
+        --air-shadow-soft: 0 10px 26px rgba(23, 32, 51, 0.08);
+        --air-radius: 8px;
+        --air-radius-lg: 12px;
         --air-display-font: "Fraunces", ui-serif, Georgia, serif;
         --air-font: "Nunito Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         --air-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -89,9 +89,10 @@ STYLE_BLOCK = """
 
     .stApp {
         background:
-            radial-gradient(circle at 8% 8%, rgba(109, 93, 252, 0.15), transparent 26rem),
-            radial-gradient(circle at 90% 18%, rgba(15, 159, 143, 0.12), transparent 23rem),
-            linear-gradient(180deg, #fffaf1 0%, var(--air-bg) 40%, var(--air-bg-soft) 100%);
+            linear-gradient(90deg, rgba(22, 124, 118, 0.07) 0 1px, transparent 1px 100%),
+            linear-gradient(rgba(23, 32, 51, 0.05) 0 1px, transparent 1px 100%),
+            linear-gradient(180deg, #fbfcf7 0%, var(--air-bg) 48%, #edf2ef 100%);
+        background-size: 42px 42px, 42px 42px, auto;
         color: var(--air-ink);
     }
 
@@ -125,7 +126,7 @@ STYLE_BLOCK = """
     div[data-testid="stTextArea"] textarea {
         background: rgba(255, 255, 255, 0.92);
         border: 1px solid var(--air-line);
-        border-radius: 16px;
+        border-radius: var(--air-radius);
         color: var(--air-ink);
         line-height: 1.5;
     }
@@ -177,10 +178,12 @@ STYLE_BLOCK = """
         overflow: hidden;
         margin-bottom: 1.3rem;
         border: 1px solid rgba(234, 223, 206, 0.95);
-        border-radius: 26px;
+        border-radius: var(--air-radius-lg);
         background:
-            radial-gradient(circle at 80% 18%, rgba(246, 166, 35, 0.25), transparent 14rem),
-            linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 240, 215, 0.86));
+            linear-gradient(90deg, rgba(23, 32, 51, 0.06) 0 1px, transparent 1px 100%),
+            linear-gradient(rgba(23, 32, 51, 0.06) 0 1px, transparent 1px 100%),
+            linear-gradient(135deg, rgba(255, 255, 251, 0.96), rgba(232, 238, 233, 0.88));
+        background-size: 32px 32px, 32px 32px, auto;
         box-shadow: var(--air-shadow);
         padding: clamp(1.35rem, 3vw, 2.2rem);
     }
@@ -191,8 +194,10 @@ STYLE_BLOCK = """
         bottom: -6rem;
         width: 18rem;
         height: 18rem;
-        border-radius: 42% 58% 52% 48%;
-        background: rgba(109, 93, 252, 0.12);
+        border-radius: var(--air-radius);
+        background:
+            linear-gradient(90deg, rgba(22, 124, 118, 0.16), transparent 48%),
+            repeating-linear-gradient(0deg, rgba(23, 32, 51, 0.08) 0 1px, transparent 1px 18px);
         content: "";
     }
 
@@ -502,6 +507,127 @@ STYLE_BLOCK = """
         padding-top: 0.75rem;
     }
 
+    /* 2026 interface refresh: sharper research workspace, same behavior. */
+    :root {
+        --air-bg: #f5f7f2;
+        --air-bg-soft: #e8eee9;
+        --air-surface: #fffffb;
+        --air-surface-strong: #eef5f1;
+        --air-ink: #172033;
+        --air-muted: #5d6978;
+        --air-line: #d5dfdb;
+        --air-primary: #167c76;
+        --air-primary-dark: #0f5f5b;
+        --air-primary-light: rgba(22, 124, 118, 0.12);
+        --air-teal: #0f8f83;
+        --air-teal-dark: #0a6f67;
+        --air-teal-light: rgba(15, 143, 131, 0.12);
+        --air-coral: #df6256;
+        --air-coral-light: rgba(223, 98, 86, 0.12);
+        --air-amber: #c98f20;
+        --air-amber-light: rgba(201, 143, 32, 0.14);
+        --air-sky: #2f6fd6;
+        --air-sky-light: rgba(47, 111, 214, 0.12);
+        --air-rose: #b84d7a;
+        --air-error: #b93835;
+        --air-success: #217a55;
+        --air-agent-planner: #6f4bb8;
+        --air-agent-researcher: #167c76;
+        --air-agent-coder: #2f6fd6;
+        --air-agent-critic: #df6256;
+        --air-agent-debater: #c98f20;
+        --air-shadow: 0 24px 60px rgba(23, 32, 51, 0.12);
+        --air-shadow-soft: 0 10px 26px rgba(23, 32, 51, 0.08);
+        --air-radius: 8px;
+        --air-radius-lg: 12px;
+    }
+
+    .stApp {
+        background:
+            linear-gradient(90deg, rgba(22, 124, 118, 0.07) 0 1px, transparent 1px 100%),
+            linear-gradient(rgba(23, 32, 51, 0.05) 0 1px, transparent 1px 100%),
+            linear-gradient(180deg, #fbfcf7 0%, var(--air-bg) 48%, #edf2ef 100%);
+        background-size: 42px 42px, 42px 42px, auto;
+    }
+
+    .block-container {
+        max-width: 1240px;
+        padding-top: 1.1rem;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"],
+    .tip-card,
+    .status-bar,
+    .placeholder-card,
+    .success-banner,
+    .stream-card,
+    .kg-card,
+    .task-event-card,
+    .agent-card {
+        background: rgba(255, 255, 251, 0.93);
+        border-color: var(--air-line);
+        border-radius: var(--air-radius);
+        box-shadow: var(--air-shadow-soft);
+    }
+
+    .research-hero {
+        border-color: var(--air-line);
+        border-radius: var(--air-radius-lg);
+        background:
+            linear-gradient(90deg, rgba(23, 32, 51, 0.06) 0 1px, transparent 1px 100%),
+            linear-gradient(rgba(23, 32, 51, 0.06) 0 1px, transparent 1px 100%),
+            linear-gradient(135deg, rgba(255, 255, 251, 0.96), rgba(232, 238, 233, 0.88));
+        background-size: 32px 32px, 32px 32px, auto;
+        box-shadow: var(--air-shadow-soft);
+    }
+
+    .research-hero:after {
+        right: 1.1rem;
+        bottom: 1.1rem;
+        width: 16rem;
+        height: 5.5rem;
+        border: 1px solid rgba(23, 32, 51, 0.08);
+        border-radius: var(--air-radius);
+        background:
+            linear-gradient(90deg, rgba(22, 124, 118, 0.16), transparent 48%),
+            repeating-linear-gradient(0deg, rgba(23, 32, 51, 0.08) 0 1px, transparent 1px 18px);
+    }
+
+    .research-hero h1 {
+        font-size: clamp(2rem, 4vw, 3.6rem);
+        line-height: 1;
+    }
+
+    .hero-badge {
+        background: var(--air-primary-light);
+        border-color: rgba(22, 124, 118, 0.22);
+        color: var(--air-primary-dark);
+    }
+
+    .agent-pill {
+        border-radius: 999px;
+    }
+
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, var(--air-primary-dark), var(--air-sky));
+        box-shadow: 0 14px 28px rgba(22, 124, 118, 0.2);
+    }
+
+    .stream-card {
+        background:
+            linear-gradient(135deg, rgba(22, 124, 118, 0.08), rgba(47, 111, 214, 0.08)),
+            rgba(255, 255, 251, 0.94);
+    }
+
+    .task-event-card,
+    .agent-card {
+        border-left-width: 4px;
+    }
+
+    .tip-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     @keyframes blink {
         50% { opacity: 0; }
     }
@@ -554,7 +680,7 @@ def _render_hero() -> None:
         <div class="research-hero">
             <span class="hero-badge">v2.0 · Open Source</span>
             <h1>Autonomous AI Researcher</h1>
-            <p>A friendly control room for turning a question into a planned, tested, and critiqued research brief.</p>
+            <p>A focused workspace for turning a research question into a planned, tested, critiqued, and exportable brief.</p>
             <div class="agent-pill-row">
                 <span class="agent-pill agent-pill--planner">Planner</span>
                 <span class="agent-pill agent-pill--researcher">Researcher</span>
@@ -673,7 +799,7 @@ def _similarity_badge_style(score: float) -> tuple[str, str]:
         return "rgba(24, 135, 95, 0.13)", "#18875f"
     if score >= 0.4:
         return "rgba(246, 166, 35, 0.16)", "#98600b"
-    return "#f7efe2", "#687386"
+    return "#e8eee9", "#5d6978"
 
 
 def _render_knowledge_card(item: dict) -> None:
@@ -788,7 +914,7 @@ def _render_control_panel(settings) -> None:
         _render_tips()
 
         _render_section_heading(
-            "🔬",
+            "01",
             "Research Question",
             "Set the direction for the multi-agent research run.",
         )
@@ -805,7 +931,7 @@ def _render_control_panel(settings) -> None:
         st.divider()
 
         _render_section_heading(
-            "🧠",
+            "02",
             "Prior Knowledge",
             "Find related past research from the local knowledge graph.",
         )

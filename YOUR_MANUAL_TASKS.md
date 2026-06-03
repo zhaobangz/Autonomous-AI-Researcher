@@ -1,129 +1,76 @@
-# Things You Still Need To Do
+# Manual Operator Tasks
 
-I fixed the code and configuration issues that can be handled without your private credentials. This checklist is for the remaining actions that require **your accounts, API keys, local machine setup, or deployment choices**.
+These tasks require your local machine, cloud accounts, provider keys, or deployment choices. They cannot be completed safely by committing code alone.
 
-## 1. Add API keys later — do not commit them
+## 1. Keep Secrets Local
 
-1. Copy the example environment file:
-   ```bash
-   cp .env.example .env
-   ```
-2. Open `.env` and add your OpenRouter key:
-   ```env
-   LLM_PROVIDER=openrouter
-   LLM_MODEL=openai/gpt-4o-mini
-   OPENROUTER_API_KEY=<your real OpenRouter API key>
-   ```
-   Optional alternate providers:
-   ```env
-   LLM_PROVIDER=openai
-   OPENAI_API_KEY=<your real OpenAI API key>
-   ```
-   or:
-   ```env
-   LLM_PROVIDER=anthropic
-   ANTHROPIC_API_KEY=<your real Anthropic API key>
-   ```
-3. Optional keys:
-   - `TAVILY_API_KEY` — better web search quality; otherwise DuckDuckGo fallback is used.
-   - `PINECONE_API_KEY` + `VECTOR_BACKEND=pinecone` — cloud vector DB; otherwise local ChromaDB is used.
-   - `INTERNAL_API_KEY` — protects REST and WebSocket API endpoints with an `X-API-Key` header; use a random value of at least 16 characters.
-4. Confirm `.env` is not tracked:
-   ```bash
-   git status --short
-   ```
-   `.env` should not appear because it is ignored.
+1. Copy `.env.example` to `.env`.
+2. Set only the key for the provider selected by `LLM_PROVIDER`.
+3. Use `OPENROUTER_API_KEY` for OpenRouter keys, not `OPENAI_API_KEY`.
+4. Use a random value of at least 16 characters for `INTERNAL_API_KEY` if you expose the FastAPI app beyond local development.
+5. Run `git status --short` and confirm `.env` is not listed.
 
-## 2. Install local dependencies
+## 2. Prepare Local Services
 
-Python:
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e .
-```
+1. Install and start Docker Desktop.
+2. Verify Docker with `docker run hello-world`.
+3. Optional: start Redis locally, or let the app fall back to in-memory run tracking.
+4. Optional on macOS: install PDF dependencies with `brew install pango cairo` if WeasyPrint cannot write PDFs.
 
-Node/static landing page tooling:
-```bash
-npm install
-npm run build
-```
+## 3. Run The Full App
 
-## 3. Install and start required local services
+Terminal 1:
 
-1. Install and run Docker Desktop.
-2. Verify Docker works:
-   ```bash
-   docker run hello-world
-   ```
-3. Optional but recommended for local API run tracking: start Redis, or let the app fall back to the in-memory run manager if Redis is unavailable.
-4. For PDF generation on macOS, install WeasyPrint system libraries if PDFs fail:
-   ```bash
-   brew install pango cairo
-   ```
-
-## 4. Verify before using real API credits
-
-Run tests first:
-```bash
-RUNS_DIR="$(mktemp -d)" python3.12 -m pytest -q
-```
-
-Expected result after these fixes:
-```text
-30 passed, 1 skipped
-```
-
-Then smoke-test imports:
-```bash
-python3.12 -m compileall -q agents api core memory tools ui config.py
-python3.12 - <<'PY'
-import importlib
-for mod in ['config', 'core.llm_client', 'memory.knowledge_graph', 'api.server', 'ui.app']:
-    importlib.import_module(mod)
-    print(f'import ok: {mod}')
-PY
-```
-
-## 5. Run the app locally
-
-Terminal 1 — backend:
 ```bash
 source .venv/bin/activate
 uvicorn api.server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Terminal 2 — Streamlit UI:
+Terminal 2:
+
 ```bash
 source .venv/bin/activate
 streamlit run ui/app.py
 ```
 
-Open http://localhost:8501 and submit a small test question first, for example:
+Open:
+
 ```text
-Compare LoRA vs full fine-tuning on small language models.
+http://localhost:8501
 ```
 
-## 6. Docker Compose run
+Start with a short question to keep cost and runtime low.
 
-After `.env` is filled in and Docker Desktop is running:
+## 4. Run Verification Before Spending Credits
+
 ```bash
-docker compose up --build
+RUNS_DIR="$(mktemp -d)" python -m pytest -q
+npm run test:site
+npm run build
+cd vercel-chat-api && npm run check
 ```
 
-Open http://localhost:8501.
+These checks do not require real LLM calls.
 
-## 7. Cost and safety tasks
+## 5. Deploy Your Public Prompt Demo
 
-- Set a spending limit in your provider dashboard before long demos.
-- Keep Docker Desktop running when using the Coder sandbox.
-- Never paste real API keys into source files, README files, screenshots, or commits.
-- Review generated reports before sharing; LLM output can contain mistakes.
+1. Deploy the static site from the repository root or with GitHub Pages.
+2. Deploy the public chat endpoint from `vercel-chat-api/`.
+3. Add production environment variables in Vercel:
+   - `LLM_PROVIDER`
+   - `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`, or `OPENAI_API_KEY` and `OPENAI_MODEL`
+   - `PUBLIC_SITE_ORIGIN`
+   - `SITE_RATE_LIMIT_PER_MINUTE`
+4. Update `assets/js/config.js` with the deployed endpoint.
+5. Run `npm run test:live-chat`.
 
-## 8. Optional project polish
+## 6. Demo Checklist
 
-- Add a screenshot or GIF to `README.md` after you successfully run the UI.
-- Add a `LICENSE` file if you plan to publish the repository.
-- Add GitHub Actions CI once the repo is ready to push.
-- Record a short demo video showing one complete research run.
+Before a live demo:
+
+- Confirm Docker Desktop is running.
+- Confirm your provider account has a spending cap.
+- Run one small local research question.
+- Confirm `report.md` and `report.pdf` appear under `runs/<run_id>/`.
+- Confirm the public website returns a concise brief but does not claim it used the full local tools.
+- Clear or archive private run artifacts before screen sharing or publishing.

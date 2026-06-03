@@ -9,11 +9,11 @@ import streamlit as st
 
 
 AGENT_ACCENTS = {
-    "planner": "#7c3aed",
-    "researcher": "#0f9f8f",
-    "coder": "#2f80ed",
-    "critic": "#f97361",
-    "debater": "#f6a623",
+    "planner": "#6f4bb8",
+    "researcher": "#167c76",
+    "coder": "#2f6fd6",
+    "critic": "#df6256",
+    "debater": "#c98f20",
 }
 
 
@@ -26,7 +26,7 @@ def _agent_accent(value: object) -> str:
     for name, color in AGENT_ACCENTS.items():
         if name in normalized:
             return color
-    return "#6d5dfc"
+    return "#167c76"
 
 
 def _status_class(status: object) -> str:
