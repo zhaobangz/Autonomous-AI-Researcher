@@ -41,71 +41,69 @@
 
 ## PART 2: FULL VIDEO SCRIPT
 
-*(Words at ~130 wpm → ~2:40. Adjust pacing to hit your target.)*
+*(Calibrated for ~100 wpm → ~3:00. Speak naturally; don't rush.)*
 
 ---
 
 **[INTRO — 0:00]**
 
-Research is one of the most valuable things humans do. But it's also brutally slow. Finding the right papers, reading them, cross-checking claims, running experiments to validate them — that process eats weeks. And even then, a single researcher might miss something, or convince themselves of a conclusion that isn't really there.
+Research is brutally slow. Finding the right papers, cross-checking claims, running experiments — that eats weeks. And even then, a single researcher can miss something, or talk themselves into a conclusion that isn't there.
 
-I built the Autonomous AI Researcher to fix that bottleneck.
-
----
-
-**[Q1 — WHY — 0:18]**
-
-The core problem I kept running into: LLMs are incredible at reasoning, but terrible at knowing when they're wrong. A single model can confidently produce a hallucinated citation or a flawed experiment. So the question wasn't "can AI do research?" — it was "how do you make AI research *trustworthy*?"
-
-The answer is: you don't trust a single agent. You build a team.
+I built the Autonomous AI Researcher to fix that.
 
 ---
 
-**[Q2 — HOW IT WORKS — 0:38]**
+**[Q1 — WHY — 0:15]**
+
+The problem: LLMs reason well, but they can't tell when they're wrong. A single model will confidently hallucinate a citation or produce a flawed experiment. So the question wasn't "can AI do research?" — it was "how do you make it *trustworthy*?"
+
+The answer: don't trust a single agent. Build a team.
+
+---
+
+**[Q2 — HOW IT WORKS — 0:32]**
 
 The system is a multi-agent pipeline built around five specialized roles.
 
-You submit a research question. The **Planner** decomposes it into a structured step-by-step roadmap — identifying what needs a literature review and what needs experimental validation.
+You submit a question. The **Planner** breaks it into a structured roadmap — identifying what needs a literature review and what needs experimental validation.
 
-The **Researcher** then runs parallel searches across arXiv, fetches and parses full PDFs, and synthesises the key findings into a structured summary.
+The **Researcher** runs parallel searches across arXiv, parses full PDFs, and synthesises the findings into a structured summary.
 
-From that summary, the **Coder** generates Python experiments and executes them inside an isolated Docker sandbox — resource-limited, no network access, reproducible.
+From that, the **Coder** generates Python experiments and executes them inside an isolated Docker sandbox — resource-limited and reproducible.
 
-The **Critic** reviews the results, assigns a confidence score from 0 to 1, identifies weaknesses, and — if confidence is too low — sends the Coder back for another iteration.
+The **Critic** scores the results from 0 to 1, flags weaknesses, and — if confidence is too low — sends the Coder back for another pass.
 
-Here's the part I'm most proud of: the **Debater**. Rather than just accepting the Critic's verdict, the Debater actively argues against it — challenging assumptions, surfacing alternative interpretations. It's adversarial quality control, built into the loop.
+And here's the part I'm most proud of: the **Debater**. Rather than accepting the Critic's verdict, it actively argues against it — surfacing blind spots and alternative interpretations. Adversarial quality control, built into the loop.
 
-Finally, a Report Generator assembles everything into a structured Markdown and PDF report — with literature synthesis, code, results, and the full critical review.
-
-The whole thing runs on a FastAPI backend with WebSocket streaming, so you watch it think in real time through a Streamlit dashboard. A memory layer using ChromaDB by default, Pinecone when configured, and a global knowledge graph lets the system reuse context across research runs.
+Finally, the Report Generator produces a structured Markdown and PDF report with literature synthesis, code, results, and the full critical review. You watch the whole thing stream live in the Streamlit dashboard.
 
 ---
 
-**[Q3 — USE CASES — 1:48]**
+**[Q3 — USE CASES — 1:40]**
 
 Who is this for?
 
-An academic researcher can get a literature synthesis in minutes instead of days, with source context they can review. An ML engineer can describe a hypothesis and receive experiment results — including code and a confidence-scored critique — before lunch. An analyst or journalist gets a structured research brief with risks and next steps.
+An academic can get a literature synthesis in minutes, not days. An ML engineer can describe a hypothesis and get experiment results — with a confidence-scored critique — before lunch. An analyst gets a structured research brief with sources and risks attached.
 
-And longer term, this is a foundation for domain-specific agents — a biomedical research assistant, a legal research tool, a financial intelligence system — each running the same trusted pipeline, tuned to its domain.
+Longer term, this is a foundation for domain-specific agents: biomedical, legal, financial — each running the same trusted pipeline, tuned to its domain.
 
-The broader impact is real: this makes rigorous, peer-reviewed-style research accessible to anyone with an API key, not just institutions with large teams.
-
----
-
-**[Q4 — WHAT'S NEXT — 2:22]**
-
-A few things I'd add with more time.
-
-First, stronger source-quality controls on top of the existing arXiv and web-search tools — so the system can rank, filter, and explain why a source is trustworthy. Second, domain-specific agent profiles — a biomedical Researcher tuned for PubMed-style evidence, or a legal Researcher that understands case-law constraints. Third, multi-user collaboration — shared run history, threaded comments, team annotations.
-
-And the one I'm most excited about extending: scheduled research. The repository already includes a GitHub Actions workflow for recurring or manually triggered headless runs; the next step is richer comparison reports that surface what changed since the last run.
+This makes rigorous research accessible to anyone with an API key, not just institutions with large teams.
 
 ---
 
-**[OUTRO — 2:48]**
+**[Q4 — WHAT'S NEXT — 2:20]**
 
-The Autonomous AI Researcher is open source, runnable locally with Docker Compose, and built to be extended. If you've ever spent a week on a literature review, you'll understand exactly why I built it.
+Three things I'd add with more time.
+
+Stronger source-quality controls — ranking and explaining *why* a source is trustworthy, not just retrieving it. Domain-specific agent profiles — a biomedical Researcher tuned for clinical evidence, a legal one that understands case-law constraints.
+
+And scheduled research: the repo already has a GitHub Actions workflow for recurring runs. The next step is comparison reports that surface what changed since the last run — turning a research tool into a research subscription.
+
+---
+
+**[OUTRO — 2:52]**
+
+Open source, one-command deploy with Docker Compose, built to extend. If you've ever spent a week on a literature review, you know exactly why I built this.
 
 Thanks for watching.
 

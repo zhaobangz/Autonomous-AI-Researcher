@@ -342,7 +342,7 @@ For hosted video platforms, leave `demoVideoSrc` empty and set `demoEmbedUrl` in
 ## Troubleshooting
 
 - **Docker daemon unavailable** — If you see `docker: Cannot connect to the Docker daemon`, start Docker Desktop and retry the run.
-- **WeasyPrint errors on macOS** — Install the required system libraries with `brew install pango cairo`.
+- **WeasyPrint errors on macOS** — Install the required system libraries with `brew install pango cairo`. On Apple Silicon, also launch the API/scripts with `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib` so Python can find the Homebrew libraries (for example `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib uvicorn api.server:app --port 8000`). Without them, reports still generate with a placeholder PDF and a complete Markdown report.
 - **Provider 401 errors** — Check your `.env` or Vercel environment variables, confirm the API key matches `LLM_PROVIDER`, and ensure there is no extra whitespace.
 - **Public prompt fails before submitting** — Confirm the Vercel endpoint responds to `OPTIONS` preflight and includes `Access-Control-Allow-Origin` for your Pages/custom domain.
 - **Public prompt returns "Origin not allowed"** — Add your GitHub Pages/custom domain origin to `PUBLIC_SITE_ORIGIN` in Vercel and redeploy. Use origins only, for example `https://zhaobangz.github.io`, with no path.
