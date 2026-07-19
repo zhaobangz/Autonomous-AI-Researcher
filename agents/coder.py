@@ -48,7 +48,7 @@ class Coder(BaseAgent):
                 "  2. The script must start with `import sys, json, time`.\n"
                 "  3. Print all important results to stdout as JSON.\n"
                 "  4. Only use the Python standard library plus: "
-                "numpy, pandas, matplotlib, scipy.\n"
+                "numpy, pandas, matplotlib, scipy, scikit-learn.\n"
                 "  5. Ensure the script runs without user interaction."
             ),
             memory=memory,
@@ -106,7 +106,7 @@ class Coder(BaseAgent):
                 prompt += (
                     f"\n\nPrevious attempt failed with:\n{stderr}\n\n"
                     "Rewrite the code WITHOUT this missing module. "
-                    "Use only numpy, pandas, matplotlib, scipy, or the standard library. "
+                    "Use only numpy, pandas, matplotlib, scipy, scikit-learn, or the standard library. "
                     "If the computation isn't possible, print a clearly labelled mock result."
                 )
                 continue
