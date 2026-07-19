@@ -49,7 +49,9 @@ class Coder(BaseAgent):
                 "  3. Print all important results to stdout as JSON.\n"
                 "  4. Only use the Python standard library plus: "
                 "numpy, pandas, matplotlib, scipy, scikit-learn.\n"
-                "  5. Ensure the script runs without user interaction."
+                "  5. Ensure the script runs without user interaction.\n"
+                "  6. The working directory is read-only. Save any files or "
+                "plots to os.environ['OUTPUT_DIR'], or skip saving them."
             ),
             memory=memory,
             tool_registry=tool_registry,
