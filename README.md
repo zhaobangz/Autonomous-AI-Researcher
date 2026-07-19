@@ -184,7 +184,7 @@ SITE_RATE_LIMIT_PER_MINUTE=6
 PUBLIC_SITE_ORIGIN=https://your-github-pages-domain.example
 ```
 
-For an OpenAI-backed deployment instead, use `LLM_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL=gpt-4o-mini`. Set a conservative `SITE_RATE_LIMIT_PER_MINUTE` because public visitors can submit prompts that consume your provider credits.
+For an OpenAI-backed deployment instead, use `LLM_PROVIDER=openai`, `OPENAI_API_KEY`, and `OPENAI_MODEL=gpt-4o-mini`. For an Anthropic-backed deployment, use `LLM_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, and `ANTHROPIC_MODEL=claude-sonnet-4-6`. Set a conservative `SITE_RATE_LIMIT_PER_MINUTE` because public visitors can submit prompts that consume your provider credits.
 
 ### 2. Connect the frontend
 
@@ -241,6 +241,7 @@ Push your changes to `main`. The included GitHub Pages workflow builds `_site/` 
 | `API_BASE_URL` | `http://localhost:8000` | API base URL used by the Streamlit UI |
 | `OPENAI_MODEL` | `gpt-4o-mini` | OpenAI model for the lightweight public Vercel chat endpoint |
 | `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | OpenRouter model for the lightweight public Vercel chat endpoint |
+| `ANTHROPIC_MODEL` | `claude-sonnet-4-6` | Anthropic model for the lightweight public Vercel chat endpoint |
 | `PUBLIC_SITE_ORIGIN` | — | Comma-separated frontend origins allowed to call the public prompt endpoint |
 | `SITE_RATE_LIMIT_PER_MINUTE` | `6` | Max public prompt submissions per IP per minute on the Vercel chat endpoint |
 | `RATE_LIMIT_PER_MINUTE` | `10` | Max run starts per IP per minute |

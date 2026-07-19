@@ -55,13 +55,20 @@ async function main() {
 
     const provider = (process.env.LLM_PROVIDER || "").toLowerCase().trim()
         || "openrouter";
-    const keyName = provider === "openrouter" ? "OPENROUTER_API_KEY" : "OPENAI_API_KEY";
-    if (!["openai", "openrouter"].includes(provider)) {
-        throw new Error("The public chat smoke test supports LLM_PROVIDER=openai or openrouter.");
+    const keyNames = {
+        openrouter: "OPENROUTER_API_KEY",
+        openai: "OPENAI_API_KEY",
+        anthropic: "ANTHROPIC_API_KEY",
+    };
+    const keyName = keyNames[provider];
+    if (!keyName) {
+        throw new Error("The public chat smoke test supports LLM_PROVIDER=openai, openrouter, or anthropic.");
     }
 
     if (provider === "openai") {
         process.env.OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+    } else if (provider === "anthropic") {
+        process.env.ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || process.env.LLM_MODEL || "claude-sonnet-4-6";
     } else {
         process.env.OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || process.env.LLM_MODEL || "openai/gpt-4o-mini";
     }

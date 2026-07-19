@@ -1,5 +1,7 @@
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions";
+const ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_VERSION = "2023-06-01";
 const MAX_PROMPT_LENGTH = 2000;
 const MIN_PROMPT_LENGTH = 10;
 const REQUEST_TIMEOUT_MS = 25000;
@@ -175,6 +177,17 @@ function extractText(data) {
         return data.output_text.trim();
     }
 
+    if (Array.isArray(data.content)) {
+        const anthropicText = data.content
+            .filter((block) => block && block.type === "text")
+            .map((block) => block.text || "")
+            .join("\n")
+            .trim();
+        if (anthropicText) {
+            return anthropicText;
+        }
+    }
+
     const choice = data.choices?.[0]?.message?.content;
     if (typeof choice === "string" && choice.trim()) {
         return choice.trim();
@@ -225,6 +238,14 @@ function llmConfig(provider) {
             apiKey: process.env.OPENAI_API_KEY,
             keyName: "OPENAI_API_KEY",
             model: process.env.OPENAI_MODEL || process.env.LLM_MODEL || "gpt-4o-mini",
+        };
+    }
+
+    if (provider === "anthropic") {
+        return {
+            apiKey: process.env.ANTHROPIC_API_KEY,
+            keyName: "ANTHROPIC_API_KEY",
+            model: process.env.ANTHROPIC_MODEL || process.env.LLM_MODEL || "claude-sonnet-4-6",
         };
     }
 
@@ -291,6 +312,38 @@ async function callOpenAI(prompt, config, controller) {
     return data;
 }
 
+async function callAnthropic(prompt, config, controller) {
+    const response = await fetch(ANTHROPIC_MESSAGES_URL, {
+        method: "POST",
+        headers: {
+            "x-api-key": config.apiKey,
+            "anthropic-version": ANTHROPIC_VERSION,
+            "Content-Type": "application/json",
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+            model: config.model,
+            max_tokens: 700,
+            system: promptInstructions(),
+            messages: [
+                {
+                    role: "user",
+                    content: prompt,
+                },
+            ],
+        }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        const error = new Error(data.error?.message || "Anthropic request failed.");
+        error.statusCode = response.status;
+        throw error;
+    }
+
+    return data;
+}
+
 async function callOpenRouter(prompt, config, controller) {
     const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
         method: "POST",
@@ -348,7 +401,9 @@ async function callLLM(prompt) {
     try {
         const data = provider === "openrouter"
             ? await callOpenRouter(prompt, config, controller)
-            : await callOpenAI(prompt, config, controller);
+            : provider === "anthropic"
+                ? await callAnthropic(prompt, config, controller)
+                : await callOpenAI(prompt, config, controller);
 
         return {
             output: extractText(data),
