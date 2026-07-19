@@ -110,7 +110,7 @@ class LLMClient:
         retry=retry_if_not_exception_type((OSError, RuntimeError, ValueError, TypeError)),
         reraise=True,
     )
-    def chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000) -> str:
+    def chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 8000) -> str:
         client = self._ensure_client()
         if self.provider in {"openai", "openrouter"}:
             response = client.chat.completions.create(
@@ -138,7 +138,7 @@ class LLMClient:
             self._update_usage(response.usage.input_tokens, response.usage.output_tokens)
             return response.content[0].text
 
-    async def stream_completion_async(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000) -> AsyncGenerator[str, None]:
+    async def stream_completion_async(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 8000) -> AsyncGenerator[str, None]:
         collected_text = ""
         prompt_tokens = 0
         completion_tokens = 0
@@ -239,7 +239,7 @@ class LLMClient:
             msgs.append({"role": "system", "content": instruction})
 
         for attempt in range(2):
-            raw_output = self.chat_completion(msgs, temperature=0.1, max_tokens=4000)
+            raw_output = self.chat_completion(msgs, temperature=0.1, max_tokens=8000)
             clean_output = raw_output.strip()
             if clean_output.startswith("```json"):
                 clean_output = clean_output[7:]

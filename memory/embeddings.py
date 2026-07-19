@@ -30,7 +30,11 @@ def embed(texts) -> np.ndarray:
     if was_single:
         texts = [texts]
 
-    api_key = get_settings().openai_api_key
+    api_key = (get_settings().openai_api_key or "").strip()
+    if not api_key.startswith("sk-") or api_key.startswith("sk-or-"):
+        # Placeholder text, comments, or an OpenRouter key — not usable for
+        # OpenAI embeddings; go straight to the local model.
+        api_key = ""
     result = None
     if api_key:
         try:
