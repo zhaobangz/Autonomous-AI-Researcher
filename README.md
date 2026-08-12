@@ -71,7 +71,7 @@ User ──► Streamlit UI ──► FastAPI (WebSocket) ──► Agent Loop
 Open the hosted site:
 
 ```text
-https://research.autonomous-ai.io
+https://zhaobangz.github.io/Autonomous-AI-Researcher/
 ```
 
 Enter a research question and click **Run prompt**. The public prompt form calls a separately hosted HTTPS backend and does not expose provider API keys in browser code.

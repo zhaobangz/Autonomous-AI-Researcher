@@ -45,11 +45,6 @@ fs.cpSync(path.join(root, "assets"), path.join(outputDir, "assets"), {
 });
 removeNamedFiles(outputDir, ".DS_Store");
 
-const cnamePath = path.join(root, "CNAME");
-if (fs.existsSync(cnamePath)) {
-    fs.copyFileSync(cnamePath, path.join(outputDir, "CNAME"));
-}
-
 fs.writeFileSync(path.join(outputDir, ".nojekyll"), "");
 
 console.log("GitHub Pages artifact built in _site.");

@@ -16,10 +16,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -36,6 +36,21 @@ jobs:
           ANTHROPIC_API_KEY_VALUE: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENROUTER_API_KEY_VALUE: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
+          if [ -z "$OPENAI_API_KEY_VALUE" ] && [ -z "$ANTHROPIC_API_KEY_VALUE" ] && [ -z "$OPENROUTER_API_KEY_VALUE" ]; then
+            echo "::error title=No LLM credentials::Set one of OPENAI_API_KEY, ANTHROPIC_API_KEY or OPENROUTER_API_KEY under Settings > Secrets and variables > Actions."
+            {
+              echo "### Scheduled Research Skipped"
+              echo ""
+              echo "No LLM provider key is configured for this repository."
+              echo "Add **one** of these repository secrets to enable the daily run:"
+              echo ""
+              echo "- \`ANTHROPIC_API_KEY\`"
+              echo "- \`OPENAI_API_KEY\`"
+              echo "- \`OPENROUTER_API_KEY\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
           question="${DISPATCH_QUESTION:-$SECRET_QUESTION}"
           if [ -z "$question" ]; then
             question="What are the practical limits of multi-agent research assistants for evidence synthesis?"
@@ -95,7 +110,7 @@ jobs:
 
       - name: Upload research artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: scheduled-research-runs
           path: ./runs/auto

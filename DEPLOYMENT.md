@@ -19,7 +19,6 @@ The public website is static:
 - `assets/js/app.js`
 - `robots.txt`
 - `sitemap.xml`
-- `CNAME`, when present
 
 The build command creates `_site/`:
 
@@ -36,31 +35,31 @@ The GitHub Pages workflow at `.github/workflows/pages.yml` builds `_site/` and p
 3. Push to `main` or manually run `Deploy GitHub Pages`.
 4. Open the Pages URL after the workflow completes.
 
-### Custom Domain
+### Site URL
 
-The repository includes:
-
-```text
-CNAME
-```
-
-with:
-
-```text
-research.autonomous-ai.io
-```
-
-`scripts/build-pages.js` copies `CNAME` into `_site/`. DNS must also point the custom subdomain at GitHub Pages:
-
-```text
-research CNAME zhaobangz.github.io
-```
-
-If you do not want the custom domain, remove `CNAME` before deployment. The default project URL is:
+The site is served from the default project URL:
 
 ```text
 https://zhaobangz.github.io/Autonomous-AI-Researcher/
 ```
+
+`robots.txt` and `sitemap.xml` reference that URL.
+
+### Custom Domain (optional)
+
+The repository ships no `CNAME`. To add a custom domain, create the DNS record
+first, then set the domain in `Settings -> Pages -> Custom domain`, which writes
+`CNAME` for you. For a subdomain:
+
+```text
+research CNAME zhaobangz.github.io.
+```
+
+Only add the domain in Pages once DNS resolves. Publishing a `CNAME` for a domain
+with no DNS record takes the site offline, because Pages redirects the project URL
+to a host that cannot be reached. Update the URL in `robots.txt`, `sitemap.xml` and
+the `href` in `404.html` at the same time, and add the new origin to
+`PUBLIC_SITE_ORIGIN` on the Vercel chat API.
 
 ## Public Chat Backend On Vercel
 

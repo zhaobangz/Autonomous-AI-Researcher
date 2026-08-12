@@ -12,7 +12,7 @@ Autonomous AI Researcher has two different user experiences:
 1. Open the hosted website:
 
    ```text
-   https://research.autonomous-ai.io
+   https://zhaobangz.github.io/Autonomous-AI-Researcher/
    ```
 
 2. Enter a research prompt of 10 to 2000 characters.

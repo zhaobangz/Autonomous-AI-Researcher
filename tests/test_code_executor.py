@@ -32,7 +32,7 @@ def executor():
 
 def test_simple_print_returns_zero_and_stdout(executor):
     result = executor.execute("print('hello')", timeout=60)
-    assert result["exit_code"] == 0
+    assert result["exit_code"] == 0, result["stderr"]
     assert "hello" in result["stdout"]
 
 
@@ -44,5 +44,5 @@ def test_output_dir_artifact_is_collected(executor):
         "    f.write('ok')\n"
     )
     result = executor.execute(code, timeout=60)
-    assert result["exit_code"] == 0
+    assert result["exit_code"] == 0, result["stderr"]
     assert any(p.endswith("result.txt") for p in result["artifacts"])

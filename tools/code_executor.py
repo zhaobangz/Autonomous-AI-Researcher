@@ -48,8 +48,13 @@ class PythonExecutor:
                 }
 
             timeout = max(1, min(int(timeout), MAX_EXECUTION_TIMEOUT_SECONDS))
+            # mkdtemp() is 0700 and owned by the host user, but the container runs as
+            # uid 1000. Unless the host uid happens to be 1000 the sandbox cannot read
+            # /code and python exits 2 with "Permission denied" (e.g. CI runners are uid 1001).
+            Path(tmpdir).chmod(0o755)
             script_path = Path(tmpdir) / "experiment.py"
             script_path.write_bytes(code_bytes)
+            script_path.chmod(0o644)
             output_dir = Path(tmpdir) / "output"
             output_dir.mkdir()
             output_dir.chmod(0o777)
