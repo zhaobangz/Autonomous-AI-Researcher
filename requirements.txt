@@ -22,7 +22,9 @@ fpdf2>=2.7.0
 numpy==1.26.4
 fastapi>=0.111.0
 uvicorn[standard]>=0.29.0
-httpx>=0.27.0,<1.0.0
+# httpx 0.28 dropped the `proxies` argument that openai 1.14.0 and
+# anthropic 0.21.3 still pass, so both clients fail to construct on 0.28+.
+httpx>=0.27.0,<0.28
 websockets>=12.0
 docker>=7.0.0
 networkx>=3.3
