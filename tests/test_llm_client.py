@@ -137,7 +137,7 @@ class TestChatCompletion:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
 
         fake_response = mocker.MagicMock()
-        fake_response.content = [mocker.MagicMock(text="claude says hi")]
+        fake_response.content = [mocker.MagicMock(type="text", text="claude says hi")]
         fake_response.usage.input_tokens = 7
         fake_response.usage.output_tokens = 3
 
@@ -159,6 +159,79 @@ class TestChatCompletion:
         called_kwargs = fake_client.messages.create.call_args.kwargs
         assert called_kwargs["system"] == "be brief"
         assert all(m["role"] != "system" for m in called_kwargs["messages"])
+
+    def test_anthropic_skips_leading_thinking_block(self, mocker, monkeypatch):
+        """Models with adaptive thinking emit a thinking block before the answer.
+
+        Its .text is None, so reading content[0] returned None and blew up two
+        layers later in structured_output().strip().
+        """
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+        monkeypatch.setenv("LLM_MODEL", "claude-sonnet-5")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+
+        fake_response = mocker.MagicMock()
+        fake_response.content = [
+            mocker.MagicMock(type="thinking", text=None, thinking=""),
+            mocker.MagicMock(type="text", text='{"ok": true}'),
+        ]
+        fake_response.usage.input_tokens = 7
+        fake_response.usage.output_tokens = 3
+
+        fake_client = mocker.MagicMock()
+        fake_client.messages.create.return_value = fake_response
+        mocker.patch("anthropic.Anthropic", return_value=fake_client)
+
+        out = LLMClient().chat_completion([{"role": "user", "content": "hi"}])
+
+        assert out == '{"ok": true}'
+
+    def test_anthropic_no_text_block_raises_clear_error(self, mocker, monkeypatch):
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+        monkeypatch.setenv("LLM_MODEL", "claude-sonnet-5")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+
+        fake_response = mocker.MagicMock()
+        fake_response.content = []
+        fake_response.stop_reason = "refusal"
+        fake_response.usage.input_tokens = 7
+        fake_response.usage.output_tokens = 0
+
+        fake_client = mocker.MagicMock()
+        fake_client.messages.create.return_value = fake_response
+        mocker.patch("anthropic.Anthropic", return_value=fake_client)
+
+        with pytest.raises(RuntimeError, match="no text block"):
+            LLMClient().chat_completion([{"role": "user", "content": "hi"}])
+
+    def test_anthropic_omits_temperature_on_models_that_reject_it(self, mocker, monkeypatch):
+        """Claude Opus 4.7+ removed the sampling params; sending them 400s."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-anthropic-key")
+
+        from config import get_settings
+
+        for model, expect_temperature in (
+            ("claude-sonnet-5", False),
+            ("claude-sonnet-4-6", True),
+        ):
+            monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+            monkeypatch.setenv("LLM_MODEL", model)
+            get_settings.cache_clear()  # settings are cached per process
+
+            fake_response = mocker.MagicMock()
+            fake_response.content = [mocker.MagicMock(type="text", text="ok")]
+            fake_response.usage.input_tokens = 1
+            fake_response.usage.output_tokens = 1
+
+            fake_client = mocker.MagicMock()
+            fake_client.messages.create.return_value = fake_response
+            mocker.patch("anthropic.Anthropic", return_value=fake_client)
+
+            LLMClient().chat_completion([{"role": "user", "content": "hi"}])
+
+            sent = fake_client.messages.create.call_args.kwargs
+            assert sent["model"] == model
+            assert ("temperature" in sent) is expect_temperature, model
 
     def test_openrouter_success_path(self, mocker, monkeypatch):
         monkeypatch.setenv("LLM_PROVIDER", "openrouter")
