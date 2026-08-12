@@ -9,6 +9,27 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_not_e
 
 from config import get_settings
 
+# Claude Opus 4.7 and later removed the sampling parameters — sending
+# `temperature` returns 400 "`temperature` is deprecated for this model".
+# Older Claude models still accept it, so keep sending it there rather than
+# silently changing their output. New models are assumed to reject it.
+_ANTHROPIC_TEMPERATURE_MODELS = (
+    "claude-opus-4-6",
+    "claude-opus-4-5",
+    "claude-opus-4-1",
+    "claude-opus-4-0",
+    "claude-sonnet-4-6",
+    "claude-sonnet-4-5",
+    "claude-sonnet-4-0",
+    "claude-haiku-4-5",
+    "claude-3",
+)
+
+
+def _anthropic_accepts_temperature(model: str) -> bool:
+    return model.startswith(_ANTHROPIC_TEMPERATURE_MODELS)
+
+
 class LLMClient:
     """Unified interface for interacting with LLMs."""
 
@@ -128,12 +149,15 @@ class LLMClient:
         elif self.provider == "anthropic":
             system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
             msgs = [m for m in messages if m["role"] != "system"]
+            kwargs: Dict[str, Any] = {}
+            if _anthropic_accepts_temperature(self.model):
+                kwargs["temperature"] = temperature
             response = client.messages.create(
                 model=self.model,
                 messages=msgs,
                 system=system_msg,
-                temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
+                **kwargs
             )
             self._update_usage(response.usage.input_tokens, response.usage.output_tokens)
             return response.content[0].text
@@ -196,10 +220,11 @@ class LLMClient:
                     "model": self.model,
                     "system": system_msg,
                     "messages": msgs,
-                    "temperature": temperature,
                     "max_tokens": max_tokens,
                     "stream": True
                 }
+                if _anthropic_accepts_temperature(self.model):
+                    data["temperature"] = temperature
                 async with client.stream("POST", "https://api.anthropic.com/v1/messages", headers=headers, json=data) as response:
                     async for line in response.aiter_lines():
                         if line.startswith("data: "):
