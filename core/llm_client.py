@@ -30,6 +30,24 @@ def _anthropic_accepts_temperature(model: str) -> bool:
     return model.startswith(_ANTHROPIC_TEMPERATURE_MODELS)
 
 
+def _anthropic_text(response: Any) -> str:
+    """Return the answer text from an Anthropic response.
+
+    Models with adaptive thinking emit a thinking block before the answer, so
+    content[0] is not necessarily the text — reading it yields None and fails
+    later with a confusing AttributeError. Pick the first text block instead,
+    and say what happened when there isn't one (e.g. a refusal).
+    """
+    for block in response.content:
+        if getattr(block, "type", None) == "text":
+            return block.text
+    kinds = [getattr(b, "type", "?") for b in response.content] or ["<empty>"]
+    raise RuntimeError(
+        f"Anthropic response contained no text block "
+        f"(stop_reason={getattr(response, 'stop_reason', None)!r}, blocks={kinds})."
+    )
+
+
 class LLMClient:
     """Unified interface for interacting with LLMs."""
 
@@ -160,7 +178,7 @@ class LLMClient:
                 **kwargs
             )
             self._update_usage(response.usage.input_tokens, response.usage.output_tokens)
-            return response.content[0].text
+            return _anthropic_text(response)
 
     async def stream_completion_async(self, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 8000) -> AsyncGenerator[str, None]:
         collected_text = ""
@@ -239,9 +257,12 @@ class LLMClient:
                                 elif chunk.get("type") == "message_delta" and "usage" in chunk:
                                     completion_tokens = chunk["usage"].get("output_tokens", 0)
                                 elif chunk.get("type") == "content_block_delta" and "delta" in chunk:
-                                    delta = chunk["delta"]["text"]
-                                    collected_text += delta
-                                    yield delta
+                                    # thinking_delta and signature_delta carry no
+                                    # "text" key — only stream the answer itself.
+                                    if chunk["delta"].get("type") == "text_delta":
+                                        delta = chunk["delta"]["text"]
+                                        collected_text += delta
+                                        yield delta
                             except json.JSONDecodeError:
                                 pass
 
