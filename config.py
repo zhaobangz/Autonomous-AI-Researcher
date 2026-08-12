@@ -45,7 +45,11 @@ _KNOWN_MODELS = {
 # three providers therefore breaks two of them.
 _PROVIDER_DEFAULT_MODELS = {
     "openai": "gpt-4o-mini",
-    "anthropic": "claude-sonnet-5",
+    # claude-sonnet-4-6 is what this project is built and priced against, and
+    # what the deployed environments run. Newer Claude models work, but they
+    # enable adaptive thinking by default, which spends part of max_tokens on
+    # reasoning — set LLM_MODEL explicitly to opt in.
+    "anthropic": "claude-sonnet-4-6",
     "openrouter": "openai/gpt-4o-mini",
 }
 

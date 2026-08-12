@@ -71,13 +71,18 @@ class LLMClient:
             "gpt-4.1": [0.002, 0.008],
             "gpt-4.1-mini": [0.0004, 0.0016],
             "gpt-3.5-turbo": [0.0005, 0.0015],
+            # USD per 1K tokens, [input, output].
             "claude-3-opus-20240229": [0.015, 0.075],
             "claude-3-sonnet-20240229": [0.003, 0.015],
             "claude-3-haiku-20240307": [0.00025, 0.00125],
-            "claude-opus-4-7": [0.015, 0.075],
-            "claude-opus-4-6": [0.015, 0.075],
+            "claude-opus-5": [0.005, 0.025],
+            "claude-opus-4-8": [0.005, 0.025],
+            "claude-opus-4-7": [0.005, 0.025],
+            "claude-opus-4-6": [0.005, 0.025],
+            "claude-sonnet-5": [0.003, 0.015],
             "claude-sonnet-4-6": [0.003, 0.015],
-            "claude-haiku-4-5-20251001": [0.00025, 0.00125],
+            "claude-haiku-4-5": [0.001, 0.005],
+            "claude-haiku-4-5-20251001": [0.001, 0.005],
         }
         
         if self.provider not in {"openai", "anthropic", "openrouter"}:
