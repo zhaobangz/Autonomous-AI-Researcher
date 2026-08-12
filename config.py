@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Literal, Optional
 from urllib.parse import urlparse
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -27,12 +27,26 @@ _KNOWN_MODELS = {
     "gpt-3.5-turbo",
     "openai/gpt-4o",
     "openai/gpt-4o-mini",
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "claude-opus-4-8",
     "claude-opus-4-7",
     "claude-opus-4-6",
     "claude-sonnet-4-6",
+    "claude-haiku-4-5",
     "claude-haiku-4-5-20251001",
     "anthropic/claude-sonnet-4",
     "anthropic/claude-3.5-sonnet",
+}
+
+# Model identifiers are provider-specific. OpenRouter namespaces them
+# ("anthropic/claude-sonnet-5"); the direct Anthropic and OpenAI APIs take the
+# bare id and 404 on a namespaced one. Defaulting to a single model across all
+# three providers therefore breaks two of them.
+_PROVIDER_DEFAULT_MODELS = {
+    "openai": "gpt-4o-mini",
+    "anthropic": "claude-sonnet-5",
+    "openrouter": "openai/gpt-4o-mini",
 }
 
 _WEAK_SECRET_VALUES = {
@@ -185,6 +199,19 @@ class Settings(BaseSettings):
         if provider not in {"openai", "anthropic", "openrouter"}:
             raise ValueError("Unknown provider: LLM_PROVIDER must be 'openai', 'anthropic', or 'openrouter'")
         return provider
+
+    @model_validator(mode="after")
+    def _match_model_to_provider(self) -> "Settings":
+        if "llm_model" not in self.model_fields_set:
+            self.llm_model = _PROVIDER_DEFAULT_MODELS[self.llm_provider]
+        elif self.llm_provider != "openrouter" and "/" in self.llm_model:
+            raise ValueError(
+                f"LLM_MODEL='{self.llm_model}' is namespaced for OpenRouter but "
+                f"LLM_PROVIDER='{self.llm_provider}' calls that provider directly, "
+                f"which returns 404 for a namespaced id. Drop the prefix "
+                f"(e.g. '{self.llm_model.split('/', 1)[1]}') or set LLM_PROVIDER=openrouter."
+            )
+        return self
 
     @field_validator("internal_api_key")
     @classmethod
