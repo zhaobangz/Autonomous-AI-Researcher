@@ -41,14 +41,28 @@ class VectorStore:
             )
         elif self.backend == "pinecone":
             from pinecone import Pinecone, ServerlessSpec
+
+            from memory.embeddings import embedding_dimension
+
             pc = Pinecone(api_key=settings.pinecone_api_key)
             index_name = settings.pinecone_index
-            if index_name not in [i.name for i in pc.list_indexes()]:
+            dimension = embedding_dimension()
+            existing = {i.name: i for i in pc.list_indexes()}
+            if index_name not in existing:
                 pc.create_index(
                     name=index_name,
-                    dimension=1536,
+                    dimension=dimension,
                     metric="cosine",
                     spec=ServerlessSpec(cloud="aws", region="us-east-1")
+                )
+            elif existing[index_name].dimension != dimension:
+                # Silently upserting into a mismatched index fails on every
+                # vector, so surface the cause instead of the symptom.
+                raise RuntimeError(
+                    f"Pinecone index {index_name!r} has dimension "
+                    f"{existing[index_name].dimension}, but the current embedder "
+                    f"produces {dimension}. Delete the index so it can be "
+                    f"recreated, or point PINECONE_INDEX at a matching one."
                 )
             self.index = pc.Index(index_name)
 
@@ -62,13 +76,15 @@ class VectorStore:
             self.collection.add(documents=texts, metadatas=metadatas, ids=ids)
         elif self.backend == "pinecone":
             from memory.embeddings import embed
-            embeddings = [embed(t) for t in texts]
+            embeddings = embed(texts)
             vectors = []
             for id_, emb, meta, text in zip(ids, embeddings, metadatas, texts):
                 m = meta.copy()
                 m["text"] = text
                 vectors.append({"id": id_, "values": emb.tolist(), "metadata": m})
-            self.index.upsert(vectors=vectors)
+            # Namespaced by run so one shared index gives the same per-run
+            # isolation the chroma backend gets from its per-run directory.
+            self.index.upsert(vectors=vectors, namespace=self.run_id)
 
     def query(self, text: str, k: int = 5) -> List[Hit]:
         if self.backend == "chroma":
@@ -90,7 +106,12 @@ class VectorStore:
         elif self.backend == "pinecone":
             from memory.embeddings import embed
             query_emb = embed(text).tolist()
-            response = self.index.query(vector=query_emb, top_k=k, include_metadata=True)
+            response = self.index.query(
+                vector=query_emb,
+                top_k=k,
+                include_metadata=True,
+                namespace=self.run_id,
+            )
             hits = []
             for match in response.matches:
                 m = match.metadata or {}

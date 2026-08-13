@@ -14,6 +14,9 @@ logger = logging.getLogger(__name__)
 _model: "Optional[SentenceTransformer]" = None
 _model_lock = threading.Lock()
 
+_dimension: Optional[int] = None
+_dimension_lock = threading.Lock()
+
 
 def _get_model() -> "SentenceTransformer":
     global _model
@@ -57,3 +60,19 @@ def embed(texts) -> np.ndarray:
             result = np.zeros((len(texts), 384))
 
     return result[0] if was_single else result
+
+
+def embedding_dimension() -> int:
+    """Width of the vectors :func:`embed` currently returns.
+
+    Probed from the live embedder rather than hard-coded, because embed() picks
+    its model at call time: text-embedding-3-small (1536) when an OpenAI key is
+    usable, all-MiniLM-L6-v2 (384) otherwise. A vector index built against the
+    wrong width rejects every upsert.
+    """
+    global _dimension
+    if _dimension is None:
+        with _dimension_lock:
+            if _dimension is None:
+                _dimension = int(embed("dimension probe").shape[0])
+    return _dimension

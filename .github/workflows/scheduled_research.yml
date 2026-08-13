@@ -86,6 +86,11 @@ jobs:
           # rate-limits GitHub runner IPs hard enough that the run spends its
           # budget retrying empty searches.
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          # Use Pinecone only when a key is present, so forks and key-less runs
+          # keep working on the local chroma backend. Removing the secret is
+          # enough to fall back.
+          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+          VECTOR_BACKEND: ${{ secrets.PINECONE_API_KEY != '' && 'pinecone' || 'chroma' }}
           # A full run does real searches and sandboxed code execution, so the
           # 600s default is not enough on a runner. Bounded by timeout-minutes.
           RUN_TIMEOUT_SECONDS: "2400"
